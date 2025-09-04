@@ -3,7 +3,7 @@ import { Pet } from './pet.model';
 
 @Injectable()
 export class PetsService {
-  private pets: Pet[] = []; 
+  private pets: Pet[] = [];
 
   create(petData: Partial<Pet>): Pet {
     const newPet: Pet = { ...petData } as Pet;

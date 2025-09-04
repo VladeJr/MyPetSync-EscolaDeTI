@@ -14,10 +14,10 @@ export interface Pet extends Document {
 export const PetSchema = new Schema({
   name: { type: String, required: true },
   species: { type: String, required: true },
-  breed: { type: String, required: true },
-  age: { type: Number, required: true },
-  weight: { type: Number, required: true },
-  neutered: { type: Boolean, required: true },
+  breed: { type: String },
+  age: { type: Number },
+  weight: { type: Number },
+  neutered: { type: Boolean },
   conditions: { type: [String], default: [] },
   photoUrl: { type: String },
 });
