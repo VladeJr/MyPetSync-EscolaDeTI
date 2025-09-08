@@ -9,10 +9,14 @@ import { User } from 'src/users/schemas/user.schema';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(@InjectModel(User.name) private UserModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private UserModel: Model<User>,
+    private jwtService: JwtService,
+  ) {}
 
   async signUp(createUserDto: CreateUserDto) {
     const emailUnico = await this.UserModel.findOne({
@@ -46,6 +50,14 @@ export class AuthService {
 
     return {
       message: 'sucesso',
+    };
+  }
+
+  async generateUserToken(userId) {
+    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '3d' });
+
+    return {
+      accessToken,
     };
   }
 }
