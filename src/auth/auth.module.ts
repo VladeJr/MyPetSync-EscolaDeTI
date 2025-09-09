@@ -3,6 +3,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import {
+  RefreshToken,
+  RefreshTokenShema,
+} from './schemas/refresh-token.schema';
 
 @Module({
   imports: [
@@ -10,6 +14,10 @@ import { User, UserSchema } from 'src/users/schemas/user.schema';
       {
         name: User.name,
         schema: UserSchema,
+      },
+      {
+        name: RefreshToken.name,
+        schema: RefreshTokenShema,
       },
     ]),
   ],
