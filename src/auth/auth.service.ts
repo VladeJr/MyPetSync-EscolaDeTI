@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/users/schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -44,16 +44,16 @@ export class AuthService {
     // procurar se o usuário existe por email
     const user = await this.UserModel.findOne({ email: loginDto.email });
     if (!user) {
-      throw new UnauthorizedException('Credenciais erradas.');
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
     // comparação da senha existente com a senha hash
     const passwordMatch = await bcrypt.compare(loginDto.senha, user.senha_hash);
     if (!passwordMatch) {
-      throw new UnauthorizedException('Credenciais erradas.');
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    return this.generateUserToken(user._id);
+    return this.generateUserToken(user._id as Types.ObjectId);
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto) {
@@ -69,8 +69,11 @@ export class AuthService {
     return this.generateUserToken(token.userId);
   }
 
-  async generateUserToken(userId) {
-    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '3d' });
+  async generateUserToken(userId: Types.ObjectId) {
+    const accessToken = this.jwtService.sign(
+      { userId: userId.toString() }, // garante string no payload do JWT
+      { expiresIn: '3d' },
+    );
     const refreshToken = uuidv4(); // id unico para o refresh token
 
     await this.salvarRefreshToken(refreshToken, userId);
@@ -81,7 +84,7 @@ export class AuthService {
     };
   }
 
-  async salvarRefreshToken(token: string, userId) {
+  async salvarRefreshToken(token: string, userId: Types.ObjectId) {
     // calcula a data de validade do refresh token,
     // setado para 3 dias a partir de agora
     const expiryDate = new Date();
