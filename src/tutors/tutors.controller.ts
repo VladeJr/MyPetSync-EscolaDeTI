@@ -3,8 +3,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { TutorsService } from './tutors.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
-import { JwtAuthGuard } from '../_shared/jwt-auth.guard';
-import { CurrentUser } from '../_shared/current-user.decorator';
+import { JwtAuthGuard } from '../shared/jwt-auth.guard';
+import { CurrentUser } from '../shared/current-user.decorator';
 
 @ApiTags('tutors')
 @ApiBearerAuth()
