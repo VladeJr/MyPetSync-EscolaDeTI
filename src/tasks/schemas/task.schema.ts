@@ -4,9 +4,9 @@ import { Document, Types } from 'mongoose';
 export type TaskDocument = Task & Document;
 
 export enum TaskStatus {
-  PENDENTE = 'pendente',
-  CONCLUIDA = 'concluida',
-  CANCELADA = 'cancelada',
+  PENDING = 'pendente',
+  COMPLETED = 'concluida',
+  CANCELLED = 'cancelada',
 }
 
 @Schema({ timestamps: true })
@@ -29,7 +29,7 @@ export class Task extends Document {
   @Prop({ default: 30 })
   durationMinutes: number; // duração default da tarefa
 
-  @Prop({ default: TaskStatus.PENDENTE, enum: TaskStatus })
+  @Prop({ default: TaskStatus.PENDING, enum: TaskStatus })
   status: TaskStatus;
 
   @Prop({ default: true })

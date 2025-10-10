@@ -35,7 +35,7 @@ export class PetsService {
     return pet;
   }
 
-  // método auxiliar para usar no TaskService
+  // método auxiliar para usar no TaskService, validação de segurança
   async getPetForTutor(tutorId: string, id: string): Promise<PetDocument> {
     const pet = await this.petModel
       .findOne({

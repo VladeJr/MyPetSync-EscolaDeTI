@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Task, TaskDocument } from './schemas/task.schema';
+import { Task, TaskDocument, TaskStatus } from './schemas/task.schema';
 import { Model, Types } from 'mongoose';
 import { PetsService } from 'src/pets/pets.service';
+import ical, { ICalEventStatus } from 'ical-generator';
 
 @Injectable()
 export class TasksService {
@@ -82,4 +83,44 @@ export class TasksService {
   }
 
   // lógica para importar tarefas para uma agenda/calendário externo - icalendar
+
+  async exportToIcal(tutorId: string, petId: string): Promise<string> {
+    const pet = await this.petsService.getPetForTutor(tutorId, petId); // validação de segurança
+    const tasks = await this.taskModel.find({ petId }).exec();
+
+    if (tasks.length === 0) {
+      throw new NotFoundException(
+        `Nenhuma tarefa encontrada para o pet ${pet.nome}`,
+      );
+    }
+
+    const calendar = ical({ name: `Agenda do pet: ${pet.nome}` });
+
+    // mapeamento p tipos de status iCal
+    tasks.forEach((task) => {
+      let icalStatus: ICalEventStatus;
+      if (task.status === TaskStatus.COMPLETED) {
+        icalStatus = ICalEventStatus.CONFIRMED;
+      } else if (task.status === TaskStatus.CANCELLED) {
+        icalStatus = ICalEventStatus.CANCELLED;
+      } else {
+        icalStatus = ICalEventStatus.TENTATIVE;
+      }
+
+      const duration = task.durationMinutes || 30; // 30 min padrão
+      const endTime = new Date(task.dateTime.getTime() + duration * 60 * 1000);
+
+      calendar.createEvent({
+        start: task.dateTime,
+        end: endTime,
+        summary: task.title,
+        description: task.description || '',
+        status: icalStatus,
+        // URL de volta para o app (necessário registrar um schema URI no mobile
+        url: `mypetsync://pet/${task.petId.toString()}/task/${(task._id as Types.ObjectId).toString()}`,
+      });
+    });
+
+    return calendar.toString();
+  }
 }
