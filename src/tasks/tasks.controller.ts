@@ -7,6 +7,9 @@ import {
   Delete,
   UseGuards,
   Put,
+  NotFoundException,
+  InternalServerErrorException,
+  Res,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -14,6 +17,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
+import type { Response } from 'express';
 
 @ApiTags('pets-tasks')
 @ApiBearerAuth()
@@ -64,9 +68,41 @@ export class TasksController {
   @Delete(':taskId')
   async remove(
     @CurrentUser() user: { userId: string },
-    @Param('taskId') id: string,
+    @Param('taskId') taskId: string,
   ) {
-    await this.tasksService.delete(user.userId, id);
+    await this.tasksService.delete(user.userId, taskId);
     return { message: `Tarefa ${taskId} removida com sucesso.` };
+  }
+
+  // exportação agenda/calendario icalendar
+  @Get('export/ical')
+  @ApiOperation({
+    summary: 'exporta a agenda de tarefas do pet p um arquivo iCalendar (.ics)',
+  })
+  async exportCalendar(
+    @CurrentUser() user: { userId: string },
+    @Param('petId') petId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const icalContent = await this.tasksService.exportToIcal(
+        user.userId,
+        petId,
+      );
+
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader(
+        `Content-Disposition`,
+        `attachment; filename= "pet-agenda-${petId}.ics"`,
+      );
+      res.send(icalContent);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Falha ao gerar arquivo de calendário',
+      );
+    }
   }
 }
