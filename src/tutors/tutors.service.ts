@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
@@ -7,7 +7,9 @@ import { UpdateTutorDto } from './dto/update-tutor.dto';
 
 @Injectable()
 export class TutorsService {
-  constructor(@InjectModel(Tutor.name) private readonly model: Model<TutorDocument>) {}
+  constructor(
+    @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
+  ) {}
 
   async createForUser(userId: string, dto: CreateTutorDto) {
     return this.model.create({ ...dto, userId: new Types.ObjectId(userId) });
@@ -33,12 +35,16 @@ export class TutorsService {
 
   async removeMine(userId: string) {
     const res = await this.model.deleteOne({ userId });
-    if (res.deletedCount === 0) throw new NotFoundException('Tutor não encontrado');
+    if (res.deletedCount === 0)
+      throw new NotFoundException('Tutor não encontrado');
     return { ok: true };
   }
 
-
   async listAll(limit = 50, page = 1) {
-    return this.model.find().skip((page - 1) * limit).limit(limit).lean();
+    return this.model
+      .find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
   }
 }

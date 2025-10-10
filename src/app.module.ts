@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import config from './config/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TutorsModule } from './tutors/tutors.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TutorsModule } from './tutors/tutors.module';
     TutorsModule,
     PetsModule,
     AuthModule,
+    TasksModule,
   ],
   controllers: [],
   providers: [],
