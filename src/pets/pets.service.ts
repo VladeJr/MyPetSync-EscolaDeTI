@@ -16,7 +16,7 @@ export class PetsService {
     });
     return createdPet.save();
   }
-
+  // filtra todos os pets por tutor
   async findAllByTutor(tutorId: string): Promise<Pet[]> {
     return this.petModel.find({ tutorId: tutorId }).exec();
   }
