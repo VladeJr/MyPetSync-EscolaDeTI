@@ -5,7 +5,7 @@ export type TutorDocument = HydratedDocument<Tutor>;
 
 @Schema({ _id: false })
 class Address {
-  @Prop({ required: true }) label: string;       
+  @Prop({ required: true }) label: string;
   @Prop({ required: true }) street: string;
   @Prop({ required: true }) city: string;
   @Prop({ required: true }) state: string;
