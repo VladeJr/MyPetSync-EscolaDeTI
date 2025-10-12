@@ -7,6 +7,7 @@ import config from './config/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TutorsModule } from './tutors/tutors.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ProvidersModule } from './providers/providers.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { TasksModule } from './tasks/tasks.module';
     PetsModule,
     AuthModule,
     TasksModule,
+    ProvidersModule,
   ],
   controllers: [],
   providers: [],
