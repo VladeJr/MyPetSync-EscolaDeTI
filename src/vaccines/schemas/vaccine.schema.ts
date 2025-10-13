@@ -11,10 +11,10 @@ export class Vaccine {
     @Prop({ requires: true, trim: true, maxlength: 120})
     name: string;
 
-    @Prop({ trim: true, maxlenght: 120})
+    @Prop({ trim: true, maxlength: 120})
     manufacturer?: string;
 
-    @Prop({ trim: true, maxlenght: 60})
+    @Prop({ trim: true, maxlength: 60})
     batch?: string;
 
     @Prop({ type: Number, min: 0 })
@@ -32,7 +32,7 @@ export class Vaccine {
     @Prop({ type: Boolean, default: false, index: true })
     isCompleted: boolean;
 
-    @Prop({ type: String, trim: true, maxlenght: 180 })
+    @Prop({ type: String, trim: true, maxlength: 180 })
     veterinarian?: string;
 
     @Prop({ type: String })
