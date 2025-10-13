@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TutorsModule } from './tutors/tutors.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProvidersModule } from './providers/providers.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProvidersModule } from './providers/providers.module';
     AuthModule,
     TasksModule,
     ProvidersModule,
+    ServicesModule,
   ],
   controllers: [],
   providers: [],
