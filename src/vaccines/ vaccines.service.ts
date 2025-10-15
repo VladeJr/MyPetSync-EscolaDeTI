@@ -15,7 +15,7 @@ export class VaccinesService {
   ) {}
 
   private async assertPet(petId: string | Types.ObjectId) {
-    const exists = await this.petModel.exists({ _id: petId as any });
+    const exists = await this.petModel.exists({ _id: petId as any }); 
     if (!exists) throw new NotFoundException('Pet não encontrado.');
   }
 
