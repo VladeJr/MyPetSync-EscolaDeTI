@@ -7,7 +7,12 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 import { User } from './schemas/user.schema';
@@ -23,6 +28,12 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
+  @ApiOperation({ summary: 'Retorna o perfil do usuário logado.' })
+  @ApiOkResponse({
+    description:
+      'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
+    type: User,
+  })
   async getMe(@CurrentUser() user: { userId: string }): Promise<User> {
     const fullUser = await this.usersService.findByUserId(user.userId);
 
@@ -30,6 +41,14 @@ export class UsersController {
   }
 
   @Put('me')
+  @ApiOperation({
+    summary:
+      'Atualiza o perfil do usuário logado (exclui o hash da senha no retorno).',
+  })
+  @ApiOkResponse({
+    description: 'Usuário atualizado com sucesso.',
+    type: User,
+  })
   async updateUser(
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,

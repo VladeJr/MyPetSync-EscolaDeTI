@@ -1,10 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { VaccinesService } from './vaccines.service';
 import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
 import { QueryVaccineDto } from './dto/query-vaccine.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { VaccinesService } from './ vaccines.service';
 
 @ApiTags('vaccines')
 @ApiBearerAuth()

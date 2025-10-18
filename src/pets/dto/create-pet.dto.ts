@@ -7,11 +7,14 @@ import {
   IsOptional,
 } from 'class-validator';
 import { PetSpecies, PetGender } from '../schemas/pets.schema';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePetDto {
+  @ApiProperty({ example: 'Thor' })
   @IsString()
   nome: string;
 
+  @ApiProperty({ example: PetSpecies.DOG, enum: PetSpecies })
   @IsEnum(PetSpecies)
   especie: PetSpecies;
 
@@ -19,10 +22,12 @@ export class CreatePetDto {
   @IsOptional()
   raca?: string;
 
+  @ApiProperty({ example: PetGender.MALE, enum: PetGender })
   @IsEnum(PetGender)
   @IsOptional()
   genero?: PetGender;
 
+  @ApiProperty({ example: 3 })
   @IsNumber()
   @IsOptional()
   idade?: number;
@@ -35,6 +40,7 @@ export class CreatePetDto {
   @IsOptional()
   foto?: string;
 
+  @ApiProperty({ example: true })
   @IsBoolean()
   @IsOptional()
   castrado?: boolean;

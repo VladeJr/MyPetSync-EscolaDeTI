@@ -17,7 +17,7 @@ import { QueryServiceDto } from './dto/query-service.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('services')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller(['services', 'providers/:providerId/services'])
 export class ServicesController {

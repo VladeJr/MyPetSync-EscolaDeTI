@@ -12,18 +12,27 @@ import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { Pet } from './schemas/pets.schema';
 import { UpdatePetDto } from './dto/update-pet.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 
 @ApiTags('pets')
-@ApiBearerAuth()
+@ApiBearerAuth('acess-token')
 @UseGuards(JwtAuthGuard)
 @Controller('pets')
 export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Cria um novo pet para o user autenticado' })
+  @ApiResponse({ status: 201, description: 'Pet criado com sucesso.' })
   async create(
     @CurrentUser() user: { userId: string },
     @Body() createPetDto: CreatePetDto,
@@ -32,11 +41,19 @@ export class PetsController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'Lista todos os pets pertencentes ao user autenticado.',
+  })
+  @ApiOkResponse({ description: 'Retorna a lista de pets.' })
   async findAll(@CurrentUser() user: { userId: string }): Promise<Pet[]> {
     return this.petsService.findAllByTutor(user.userId);
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Busca um pet por ID (somente se pertencer ao tutor logado)',
+  })
+  @ApiParam({ name: 'id', description: 'ID do pet' })
   async findById(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
@@ -45,6 +62,8 @@ export class PetsController {
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Atualiza pet por ID' })
+  @ApiOkResponse({ description: 'Pet atualizado com sucesso' })
   async update(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
@@ -54,6 +73,8 @@ export class PetsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Remove pet por ID' })
+  @ApiOkResponse({ description: 'Pet removido com sucesso' })
   async delete(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,

@@ -15,7 +15,7 @@ export class VaccinesService {
   ) {}
 
   private async assertPet(petId: string | Types.ObjectId) {
-    const exists = await this.petModel.exists({ _id: petId as any }); 
+    const exists = await this.petModel.exists({ _id: petId as any });
     if (!exists) throw new NotFoundException('Pet não encontrado.');
   }
 
@@ -50,17 +50,18 @@ export class VaccinesService {
       filter.isCompleted = false;
     }
 
-   
     if (q.dueUntil) {
-      filter.nextDoseAt = { ...(filter.nextDoseAt || {}), $lte: new Date(q.dueUntil) };
+      filter.nextDoseAt = {
+        ...(filter.nextDoseAt || {}),
+        $lte: new Date(q.dueUntil),
+      };
       filter.isCompleted = false;
     }
 
- 
     if (q.appliedFrom || q.appliedTo) {
       filter.appliedAt = {};
-      if (q.appliedFrom) (filter.appliedAt as any).$gte = new Date(q.appliedFrom);
-      if (q.appliedTo) (filter.appliedAt as any).$lte = new Date(q.appliedTo);
+      if (q.appliedFrom) filter.appliedAt.$gte = new Date(q.appliedFrom);
+      if (q.appliedTo) filter.appliedAt.$lte = new Date(q.appliedTo);
     }
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
