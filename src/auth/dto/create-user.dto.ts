@@ -33,6 +33,5 @@ export class CreateUserDto {
   @IsEnum(UserType, {
     message: 'O tipo de usuário deve ser tutor ou provedor.',
   })
-  @IsOptional() // remover IsOptional
   tipo_usuario: string;
 }

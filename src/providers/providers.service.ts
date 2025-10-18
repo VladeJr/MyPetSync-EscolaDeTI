@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 import { Provider, ProviderDocument } from './schemas/provider.schema';
@@ -15,7 +19,8 @@ export class ProvidersService {
   async create(dto: CreateProviderDto) {
     const email = dto.email.toLowerCase();
     const exists = await this.model.findOne({ email }).lean();
-    if (exists) throw new ConflictException('Email já cadastrado para um prestador.');
+    if (exists)
+      throw new ConflictException('Email já cadastrado para um prestador.');
     const created = await this.model.create({
       ...dto,
       email,
@@ -29,7 +34,10 @@ export class ProvidersService {
     if (q.city) filter.city = { $regex: q.city, $options: 'i' };
     if (q.state) filter.state = q.state.toUpperCase();
     if (typeof q.active !== 'undefined') filter.isActive = q.active === 'true';
-    if (q.service) filter.servicesOffered = { $elemMatch: { $regex: q.service, $options: 'i' } };
+    if (q.service)
+      filter.servicesOffered = {
+        $elemMatch: { $regex: q.service, $options: 'i' },
+      };
     if (q.q) filter.name = { $regex: q.q, $options: 'i' };
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
@@ -37,7 +45,12 @@ export class ProvidersService {
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-      this.model.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      this.model
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       this.model.countDocuments(filter),
     ]);
 
@@ -53,8 +66,13 @@ export class ProvidersService {
   async update(id: string, dto: UpdateProviderDto) {
     if (dto.email) {
       const email = dto.email.toLowerCase();
-      const conflict = await this.model.findOne({ _id: { $ne: id }, email }).lean();
-      if (conflict) throw new ConflictException('Email já cadastrado para outro prestador.');
+      const conflict = await this.model
+        .findOne({ _id: { $ne: id }, email })
+        .lean();
+      if (conflict)
+        throw new ConflictException(
+          'Email já cadastrado para outro prestador.',
+        );
       dto.email = email;
     }
     if (dto.state) dto.state = dto.state.toUpperCase();

@@ -1,17 +1,25 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
 import { Service, ServiceDocument } from './schemas/service.schema';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { QueryServiceDto } from './dto/query-service.dto';
-import { Provider, ProviderDocument } from '../providers/schemas/provider.schema';
+import {
+  Provider,
+  ProviderDocument,
+} from '../providers/schemas/provider.schema';
 
 @Injectable()
 export class ServicesService {
   constructor(
     @InjectModel(Service.name) private readonly model: Model<ServiceDocument>,
-    @InjectModel(Provider.name) private readonly providerModel: Model<ProviderDocument>,
+    @InjectModel(Provider.name)
+    private readonly providerModel: Model<ProviderDocument>,
   ) {}
 
   private async assertProvider(providerId: string | Types.ObjectId) {
@@ -22,13 +30,22 @@ export class ServicesService {
   async create(dto: CreateServiceDto) {
     await this.assertProvider(dto.provider);
     // Validar unicidade (provider + name)
-    const conflict = await this.model.exists({ provider: dto.provider, name: dto.name });
-    if (conflict) throw new ConflictException('Este prestador já possui um serviço com esse nome.');
+    const conflict = await this.model.exists({
+      provider: dto.provider,
+      name: dto.name,
+    });
+    if (conflict)
+      throw new ConflictException(
+        'Este prestador já possui um serviço com esse nome.',
+      );
     const created = await this.model.create(dto);
     return created.toObject();
   }
 
-  async createForProvider(providerId: string, payload: Omit<CreateServiceDto, 'provider'>) {
+  async createForProvider(
+    providerId: string,
+    payload: Omit<CreateServiceDto, 'provider'>,
+  ) {
     return this.create({ ...payload, provider: providerId });
   }
 
@@ -46,8 +63,8 @@ export class ServicesService {
 
     if (q.minPrice || q.maxPrice) {
       filter.price = {};
-      if (q.minPrice) (filter.price as any).$gte = Number(q.minPrice);
-      if (q.maxPrice) (filter.price as any).$lte = Number(q.maxPrice);
+      if (q.minPrice) filter.price.$gte = Number(q.minPrice);
+      if (q.maxPrice) filter.price.$lte = Number(q.maxPrice);
     }
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
@@ -57,7 +74,7 @@ export class ServicesService {
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate('provider', 'name email city state isActive') 
+        .populate('provider', 'name email city state isActive')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -92,7 +109,10 @@ export class ServicesService {
         provider: providerId,
         name,
       });
-      if (conflict) throw new ConflictException('Este prestador já possui um serviço com esse nome.');
+      if (conflict)
+        throw new ConflictException(
+          'Este prestador já possui um serviço com esse nome.',
+        );
     }
 
     const updated = await this.model.findByIdAndUpdate(
@@ -110,7 +130,6 @@ export class ServicesService {
     return { success: true };
   }
 
- 
   async removeByProvider(providerId: string | Types.ObjectId) {
     await this.model.deleteMany({ provider: providerId as any });
   }
