@@ -9,19 +9,19 @@ export class Service {
   provider: Types.ObjectId;
 
   @Prop({ required: true, trim: true, maxlength: 100 })
-  name: string; 
+  name: string;
 
   @Prop({ trim: true, maxlength: 200 })
   description?: string;
 
   @Prop({ type: Number, min: 0, default: 0 })
-  price: number; 
+  price: number;
 
   @Prop({ type: Number, min: 1, default: 30 })
   duration: number;
 
   @Prop({ type: String, trim: true, maxlength: 60 })
-  category?: string; 
+  category?: string;
 
   @Prop({ type: Boolean, default: true, index: true })
   isActive: boolean;

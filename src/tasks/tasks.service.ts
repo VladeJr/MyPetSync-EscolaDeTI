@@ -31,20 +31,23 @@ export class TasksService {
   async findAllByPetId(tutorId: string, petId: string): Promise<Task[]> {
     await this.petsService.getPetForTutor(tutorId, petId);
 
-    return this.taskModel.find({ petId }).exec();
+    return this.taskModel.find({ petId: new Types.ObjectId(petId) }).exec();
   }
 
   // lista todas as tarefas do tutor em todos os pets
   async findAllByTutor(tutorId: string): Promise<Task[]> {
-    return this.taskModel.find({ tutorId }).sort({ dateTime: 1 }).exec();
+    return this.taskModel
+      .find({ tutorId: new Types.ObjectId(tutorId) })
+      .sort({ dateTime: 1 })
+      .exec();
   }
 
   // busca tarefa por id
   async findById(tutorId: string, taskId: string): Promise<Task> {
     const task = await this.taskModel
       .findOne({
-        _id: taskId,
-        tutorId: tutorId,
+        _id: new Types.ObjectId(taskId),
+        tutorId: new Types.ObjectId(tutorId),
       })
       .exec();
 
@@ -60,7 +63,7 @@ export class TasksService {
     dto: UpdateTaskDto,
   ): Promise<Task> {
     const updatedTask = await this.taskModel.findOneAndUpdate(
-      { _id: taskId, tutorId: tutorId },
+      { _id: new Types.ObjectId(taskId), tutorId: new Types.ObjectId(tutorId) },
       { ...dto, dateTime: dto.dateTime ? new Date(dto.dateTime) : undefined }, // trata a conversão de data
       { new: true },
     );
@@ -73,8 +76,8 @@ export class TasksService {
 
   async delete(tutorId: string, taskId: string): Promise<void> {
     const deletedTask = await this.taskModel.findOneAndDelete({
-      _id: taskId,
-      tutorId: tutorId,
+      _id: new Types.ObjectId(taskId),
+      tutorId: new Types.ObjectId(tutorId),
     });
 
     if (!deletedTask) {
@@ -86,7 +89,9 @@ export class TasksService {
 
   async exportToIcal(tutorId: string, petId: string): Promise<string> {
     const pet = await this.petsService.getPetForTutor(tutorId, petId); // validação de segurança
-    const tasks = await this.taskModel.find({ petId }).exec();
+    const tasks = await this.taskModel
+      .find({ petId: new Types.ObjectId(petId) })
+      .exec();
 
     if (tasks.length === 0) {
       throw new NotFoundException(

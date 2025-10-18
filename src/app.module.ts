@@ -9,6 +9,7 @@ import { TutorsModule } from './tutors/tutors.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ServicesModule } from './services/services.module';
     TasksModule,
     ProvidersModule,
     ServicesModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],

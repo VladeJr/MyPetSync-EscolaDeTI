@@ -18,14 +18,14 @@ export class PetsService {
   }
   // filtra todos os pets por tutor
   async findAllByTutor(tutorId: string): Promise<Pet[]> {
-    return this.petModel.find({ tutorId: tutorId }).exec();
+    return this.petModel.find({ tutorId: new Types.ObjectId(tutorId) }).exec();
   }
 
   async findById(tutorId: string, id: string): Promise<Pet> {
     const pet = await this.petModel
       .findOne({
         _id: id,
-        tutorId: tutorId,
+        tutorId: new Types.ObjectId(tutorId),
       })
       .exec();
     if (!pet) {
@@ -39,8 +39,8 @@ export class PetsService {
   async getPetForTutor(tutorId: string, id: string): Promise<PetDocument> {
     const pet = await this.petModel
       .findOne({
-        _id: id,
-        tutorId: tutorId,
+        _id: new Types.ObjectId(id),
+        tutorId: new Types.ObjectId(tutorId),
       })
       .exec();
 

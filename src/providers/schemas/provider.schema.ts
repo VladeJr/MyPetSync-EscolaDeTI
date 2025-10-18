@@ -8,7 +8,13 @@ export class Provider {
   @Prop({ required: true, trim: true, maxlength: 120 })
   name: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true, maxlength: 160 })
+  @Prop({
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    maxlength: 160,
+  })
   email: string;
 
   @Prop({ trim: true, maxlength: 20 })

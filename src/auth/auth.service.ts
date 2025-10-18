@@ -37,6 +37,7 @@ export class AuthService {
       nome: createUserDto.nome,
       email: createUserDto.email,
       senha_hash: senhaHashed,
+      tipo_usuario: createUserDto.tipo_usuario,
     }); // validação dos dados no dto
   }
 

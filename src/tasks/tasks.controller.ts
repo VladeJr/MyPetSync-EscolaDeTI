@@ -47,7 +47,7 @@ export class TasksController {
     return this.tasksService.findAllByPetId(user.userId, petId);
   }
 
-  @Get('/all')
+  @Get(':taskId')
   @ApiOperation({ summary: 'busca tarefa por id' })
   async findOne(
     @CurrentUser() user: { userId: string },
