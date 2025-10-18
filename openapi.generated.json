@@ -1,0 +1,230 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MyPetSync - Generated API",
+    "version": "1.0.0",
+    "description": "Especificação OpenAPI gerada automaticamente a partir dos controllers do projeto. Campos DTO inferidos quando necessário."
+  },
+  "servers": [{ "url": "http://localhost:3000" }],
+  "components": {
+    "schemas": {
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "nome": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "senha": { "type": "string", "minLength": 6 },
+          "telefone": { "type": "string" },
+          "foto_perfil": { "type": "string" },
+          "tipo_usuario": { "type": "string" }
+        },
+        "required": ["nome", "email", "senha"]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "senha": { "type": "string", "minLength": 6 }
+        },
+        "required": ["email", "senha"]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string" } },
+        "required": ["refreshToken"]
+      },
+      "CreatePetDto": {
+        "type": "object",
+        "properties": {
+          "nome": { "type": "string" },
+          "especie": { "type": "string" },
+          "raca": { "type": "string" },
+          "genero": { "type": "string" },
+          "idade": { "type": "number" },
+          "peso": { "type": "number" },
+          "foto": { "type": "string" },
+          "castrado": { "type": "boolean" },
+          "condicoes_especiais": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["nome", "especie"]
+      },
+      "UpdatePetDto": {
+        "allOf": [ { "$ref": "#/components/schemas/CreatePetDto" } ]
+      },
+      "CreateTaskDto": {
+        "type": "object",
+        "properties": {
+          "petId": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "dateTime": { "type": "string", "format": "date-time" },
+          "durationMinutes": { "type": "number" },
+          "reminder": { "type": "boolean" },
+          "status": { "type": "string" }
+        },
+        "required": ["petId", "title", "dateTime"]
+      },
+      "UpdateTaskDto": { "allOf": [ { "$ref": "#/components/schemas/CreateTaskDto" } ] },
+      "AddressDto": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "street": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zip": { "type": "string" }
+        },
+        "required": ["label", "street", "city", "state", "zip"]
+      },
+      "CreateTutorDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "phone": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "addresses": { "type": "array", "items": { "$ref": "#/components/schemas/AddressDto" } }
+        },
+        "required": ["name"]
+      },
+      "UpdateTutorDto": { "allOf": [ { "$ref": "#/components/schemas/CreateTutorDto" } ] },
+      "PetResponse": {
+        "type": "object",
+        "properties": { "_id": { "type": "string" }, "nome": { "type": "string" }, "tutorId": { "type": "string" } }
+      },
+      "TaskResponse": {
+        "type": "object",
+        "properties": { "_id": { "type": "string" }, "title": { "type": "string" }, "petId": { "type": "string" }, "dateTime": { "type": "string", "format": "date-time" } }
+      },
+      "TutorResponse": { "type": "object", "properties": { "_id": { "type": "string" }, "userId": { "type": "string" }, "name": { "type": "string" } } }
+    },
+    "securitySchemes": {
+      "BearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  },
+  "security": [{ "BearerAuth": [] }],
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "summary": "Registro de usuário",
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUserDto" } } } },
+        "responses": { "201": { "description": "Criado" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginDto" } } } },
+        "responses": { "200": { "description": "Tokens", "content": { "application/json": { "schema": { "type": "object", "properties": { "accessToken": { "type": "string" }, "refreshToken": { "type": "string" } } } } } }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh token",
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshTokenDto" } } } },
+        "responses": { "200": { "description": "Novo accessToken e refreshToken" } }
+      }
+    },
+    "/pets": {
+      "post": {
+        "summary": "Cria pet",
+        "security": [{ "BearerAuth": [] }],
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePetDto" } } } },
+        "responses": { "201": { "description": "Pet criado" } }
+      },
+      "get": {
+        "summary": "Lista pets do tutor",
+        "security": [{ "BearerAuth": [] }],
+  "responses": { "200": { "description": "Lista de pets", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PetResponse" } } } } }
+      }
+    },
+    "/pets/{id}": {
+      "get": {
+        "summary": "Busca pet por id",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Pet" } }
+      },
+      "put": {
+        "summary": "Atualiza pet",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdatePetDto" } } } },
+        "responses": { "200": { "description": "Pet atualizado" } }
+      },
+      "delete": {
+        "summary": "Deleta pet",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Ok" } }
+      }
+    },
+    "/pets/{petId}/tasks": {
+      "post": {
+        "summary": "Cria tarefa para pet",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }],
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTaskDto" } } } },
+        "responses": { "201": { "description": "Tarefa criada" } }
+      },
+      "get": {
+        "summary": "Lista tarefas do pet",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }],
+  "responses": { "200": { "description": "Lista de tarefas", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TaskResponse" } } } } }
+      }
+    },
+    "/pets/{petId}/tasks/{taskId}": {
+      "get": {
+        "summary": "Busca tarefa por id",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "Tarefa" } }
+      },
+      "put": {
+        "summary": "Atualiza tarefa",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateTaskDto" } } } },
+        "responses": { "200": { "description": "Tarefa atualizada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaskResponse" } } } }
+      },
+      "delete": {
+        "summary": "Remove tarefa",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "Tarefa removida" } }
+      }
+    },
+    "/pets/{petId}/tasks/export/ical": {
+      "get": {
+        "summary": "Exporta tarefas do pet para iCalendar (.ics)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Arquivo .ics", "content": { "text/calendar": { "schema": { "type": "string" } } } } }
+      }
+    },
+    "/tutors/me": {
+      "post": {
+        "summary": "Cria tutor para usuário autenticado",
+        "security": [{ "BearerAuth": [] }],
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTutorDto" } } } },
+        "responses": { "201": { "description": "Tutor criado" } }
+      },
+      "get": {
+        "summary": "Retorna tutor do usuário autenticado",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Tutor" } }
+      },
+      "put": {
+        "summary": "Atualiza tutor do usuário autenticado",
+        "security": [{ "BearerAuth": [] }],
+  "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateTutorDto" } } } },
+        "responses": { "200": { "description": "Tutor atualizado" } }
+      },
+      "delete": {
+        "summary": "Remove tutor do usuário autenticado",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Ok" } }
+      }
+    }
+  }
+}

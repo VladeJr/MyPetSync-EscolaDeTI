@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -9,8 +19,6 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 @ApiTags('services')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-
-
 @Controller(['services', 'providers/:providerId/services'])
 export class ServicesController {
   constructor(private readonly service: ServicesService) {}
@@ -18,7 +26,10 @@ export class ServicesController {
   /** Cria serviço global: body precisa de provider */
   @Post()
   @ApiOkResponse({ description: 'Serviço criado' })
-  create(@Body() dto: CreateServiceDto, @Param('providerId') providerId?: string) {
+  create(
+    @Body() dto: CreateServiceDto,
+    @Param('providerId') providerId?: string,
+  ) {
     // se vier aninhado, sobrescreve provider pelo path param
     if (providerId) {
       const { provider, ...payload } = dto;
@@ -29,8 +40,13 @@ export class ServicesController {
 
   @Get()
   @ApiOkResponse({ description: 'Lista paginada + filtros' })
-  findAll(@Query() q: QueryServiceDto, @Param('providerId') providerId?: string) {
-    return this.service.findAll(providerId ? { ...q, provider: providerId } : q);
+  findAll(
+    @Query() q: QueryServiceDto,
+    @Param('providerId') providerId?: string,
+  ) {
+    return this.service.findAll(
+      providerId ? { ...q, provider: providerId } : q,
+    );
   }
 
   @Get(':id')

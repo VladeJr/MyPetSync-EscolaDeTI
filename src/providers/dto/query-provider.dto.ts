@@ -1,32 +1,53 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBooleanString, IsNumberString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBooleanString,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class QueryProviderDto {
   @ApiPropertyOptional({ example: 'Maringá' })
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   city?: string;
 
   @ApiPropertyOptional({ example: 'PR' })
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   state?: string;
 
-  @ApiPropertyOptional({ description: 'Filtra por serviço oferecido', example: 'banho' })
-  @IsOptional() @IsString()
+  @ApiPropertyOptional({
+    description: 'Filtra por serviço oferecido',
+    example: 'banho',
+  })
+  @IsOptional()
+  @IsString()
   service?: string;
 
-  @ApiPropertyOptional({ description: 'Apenas ativos? true/false', example: 'true' })
-  @IsOptional() @IsBooleanString()
+  @ApiPropertyOptional({
+    description: 'Apenas ativos? true/false',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsBooleanString()
   active?: string;
 
   @ApiPropertyOptional({ example: '1' })
-  @IsOptional() @IsNumberString()
+  @IsOptional()
+  @IsNumberString()
   page?: string;
 
   @ApiPropertyOptional({ example: '20' })
-  @IsOptional() @IsNumberString()
+  @IsOptional()
+  @IsNumberString()
   limit?: string;
 
-  @ApiPropertyOptional({ description: 'Busca por nome (case-insensitive)', example: 'petshop' })
-  @IsOptional() @IsString()
+  @ApiPropertyOptional({
+    description: 'Busca por nome (case-insensitive)',
+    example: 'petshop',
+  })
+  @IsOptional()
+  @IsString()
   q?: string;
 }

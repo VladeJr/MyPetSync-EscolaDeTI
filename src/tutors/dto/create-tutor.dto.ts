@@ -3,9 +3,6 @@ import { Type } from 'class-transformer';
 import { AddressDto } from './address.dto';
 
 export class CreateTutorDto {
-  @IsString()
-  name: string;
-
   @IsOptional()
   @IsString()
   phone?: string;
