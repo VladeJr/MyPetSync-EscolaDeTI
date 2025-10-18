@@ -14,13 +14,20 @@ import {
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProduces,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 import type { Response } from 'express';
 
 @ApiTags('pets-tasks')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('pets/:petId/tasks')
 export class TasksController {
@@ -28,6 +35,14 @@ export class TasksController {
 
   @Post()
   @ApiOperation({ summary: 'Cria uma nova tarefa para um pet específico.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Tarefa criada com sucesso.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pet não encontrado ou acesso negado.',
+  })
   async create(
     @CurrentUser() user: { userId: string },
     @Param('petId') petId: string,
@@ -40,6 +55,7 @@ export class TasksController {
   @ApiOperation({
     summary: 'Lista todas as tarefas de um pet específico para o tutor',
   })
+  @ApiOkResponse({ description: 'Retorna a lista de tarefas do pet.' })
   async findAllByPet(
     @CurrentUser() user: { userId: string },
     @Param('petId') petId: string,
@@ -48,7 +64,7 @@ export class TasksController {
   }
 
   @Get(':taskId')
-  @ApiOperation({ summary: 'busca tarefa por id' })
+  @ApiOperation({ summary: 'Busca tarefa por ID' })
   async findOne(
     @CurrentUser() user: { userId: string },
     @Param('taskId') taskId: string,
@@ -57,6 +73,7 @@ export class TasksController {
   }
 
   @Put(':taskId')
+  @ApiOperation({ summary: 'Atualiza tarefa por ID' })
   async update(
     @CurrentUser() user: { userId: string },
     @Param('taskId') id: string,
@@ -66,6 +83,7 @@ export class TasksController {
   }
 
   @Delete(':taskId')
+  @ApiOperation({ summary: 'Remove tarefa por ID' })
   async remove(
     @CurrentUser() user: { userId: string },
     @Param('taskId') taskId: string,
@@ -78,6 +96,11 @@ export class TasksController {
   @Get('export/ical')
   @ApiOperation({
     summary: 'exporta a agenda de tarefas do pet p um arquivo iCalendar (.ics)',
+  })
+  @ApiProduces('text/calendar') // documenta que o retorno é um arquivo .ics
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna um arquivo .ics para download.',
   })
   async exportCalendar(
     @CurrentUser() user: { userId: string },
