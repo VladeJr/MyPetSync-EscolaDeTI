@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types, SortOrder } from 'mongoose';
-import { Appointment, AppointmentDocument } from '../schemas/appointment.schema';
-import { CreateAppointmentDto } from '../dto/create-appointment.dto';
-import { UpdateAppointmentDto } from '..dto/update-appointment.dto';
-import { QueryAppointmentDto } from '../dto/query-appointment.dto';
-import { Pet, PetDocument } from '../../pets/schemas/pets.schema';
-import { Provider, ProviderDocument } from '../../providers/schemas/provider.schema';
+import { Appointment, AppointmentDocument } from './schemas/appointment.schema';
+import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { QueryAppointmentDto } from './dto/query-appointment.dto';
+import { Pet, PetDocument } from '../pets/schemas/pets.schema';
+import { Provider, ProviderDocument } from '../providers/schemas/provider.schema';
 
 @Injectable()
 export class AppointmentsService {
