@@ -10,6 +10,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { UsersModule } from './users/users.module';
     ProvidersModule,
     ServicesModule,
     UsersModule,
+    AppointmentsModule
   ],
   controllers: [],
   providers: [],
