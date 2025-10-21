@@ -25,8 +25,9 @@ export class AppointmentsController {
     @Param('petId') petId?: string,
     @Param('providerId') providerId?: string,
   ) {
-    if (petId)  return this.service.createForPet(petId, { ...dto, pet: undefined as any });
-    if (providerId) return this.service.createForProvider(providerId, { ...dto, provider: undefined as any });
+    const { pet, provider, ...rest } = dto as any;
+    if (petId) return this.service.createForPet(petId, rest as Omit<CreateAppointmentDto, 'pet'>);
+    if (providerId) return this.service.createForProvider(providerId, rest as Omit<CreateAppointmentDto, 'provider'>);
     return this.service.create(dto);
   }
 
