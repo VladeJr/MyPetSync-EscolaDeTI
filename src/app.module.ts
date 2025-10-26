@@ -12,6 +12,7 @@ import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { MailModule } from './mail/mail.module';
+import { ExamsModule } from './exams/exams.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { MailModule } from './mail/mail.module';
     UsersModule,
     AppointmentsModule,
     MailModule,
+    ExamsModule
   ],
   controllers: [],
   providers: [],
