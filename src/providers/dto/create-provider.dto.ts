@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsEmail,
+  IsEnum,
   IsLatitude,
   IsLongitude,
   IsOptional,
@@ -10,6 +11,7 @@ import {
   Length,
   MaxLength,
 } from 'class-validator';
+import { ProviderType } from '../schemas/provider.schema';
 
 export class CreateProviderDto {
   @ApiProperty({ example: 'Clínica Vet Maringá' })
@@ -21,6 +23,14 @@ export class CreateProviderDto {
   @IsEmail()
   @MaxLength(160)
   email: string;
+
+  @ApiProperty({
+    example: ProviderType.AUTONOMO,
+    enum: ProviderType,
+    description: 'Tipo de Prestador: autônomo ou empresa',
+  })
+  @IsEnum(ProviderType)
+  type: ProviderType;
 
   @ApiPropertyOptional({ example: '+55 44 99999-0000' })
   @IsOptional()

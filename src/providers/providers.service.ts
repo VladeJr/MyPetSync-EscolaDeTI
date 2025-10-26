@@ -39,6 +39,7 @@ export class ProvidersService {
         $elemMatch: { $regex: q.service, $options: 'i' },
       };
     if (q.q) filter.name = { $regex: q.q, $options: 'i' };
+    if (q.type) filter.type = q.type; // filtro por tipo autonomo ou company
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);

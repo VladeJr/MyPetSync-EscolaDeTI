@@ -8,6 +8,8 @@ import {
   RefreshTokenShema,
 } from './schemas/refresh-token.schema';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { ResetToken, ResetTokenSchema } from './schemas/reset-token.schema';
+import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [
@@ -20,9 +22,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         name: RefreshToken.name,
         schema: RefreshTokenShema,
       },
+      {
+        name: ResetToken.name,
+        schema: ResetTokenSchema,
+      },
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailService],
 })
 export class AuthModule {}

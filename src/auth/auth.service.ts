@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -13,6 +14,9 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { nanoid } from 'nanoid';
+import { ResetToken } from './schemas/reset-token.schema';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +24,10 @@ export class AuthService {
     @InjectModel(User.name) private UserModel: Model<User>,
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
+    @InjectModel(ResetToken.name)
+    private resetTokenModel: Model<ResetToken>,
     private jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
@@ -92,5 +99,50 @@ export class AuthService {
     expiryDate.setDate(expiryDate.getDate() + 3);
 
     await this.RefreshTokenModel.create({ token, userId, expiryDate });
+  }
+
+  async changePassword(
+    userId: Types.ObjectId,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.UserModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const passwordMatch = await bcrypt.compare(oldPassword, user.senha_hash);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    user.senha_hash = newHashedPassword;
+    await user.save();
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.UserModel.findOne({ email });
+
+    if (user) {
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 1);
+
+      const resetToken = nanoid(64);
+      await this.resetTokenModel.create({
+        token: resetToken,
+        userId: user._id,
+        expiryDate,
+      });
+
+      const frontendUrl = 'http://localhost:5173';
+      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+      await this.mailService.sendPasswordResetEmail(user.email, resetLink);
+    }
+
+    return {
+      message: 'Se o usuário existir, um e-mail de redefinição foi enviado.',
+    };
   }
 }

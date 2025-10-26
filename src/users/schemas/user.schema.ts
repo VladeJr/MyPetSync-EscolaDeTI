@@ -25,6 +25,12 @@ export class User extends Document {
 
   @Prop({ enum: UserType }) // adicionar required: true
   tipo_usuario: UserType;
+
+  @Prop()
+  resetPasswordToken?: string;
+
+  @Prop({ type: Date })
+  resetPasswordExpires?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
