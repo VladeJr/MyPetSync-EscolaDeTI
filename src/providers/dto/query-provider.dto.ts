@@ -1,16 +1,27 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBooleanString,
+  IsEnum,
   IsNumberString,
   IsOptional,
   IsString,
 } from 'class-validator';
+import { ProviderType } from '../schemas/provider.schema';
 
 export class QueryProviderDto {
   @ApiPropertyOptional({ example: 'Maringá' })
   @IsOptional()
   @IsString()
   city?: string;
+
+  @ApiPropertyOptional({
+    example: ProviderType.COMPANY,
+    enum: ProviderType,
+    description: 'Filtra por tipo (autônomo/empresa)',
+  })
+  @IsOptional()
+  @IsEnum(ProviderType)
+  type?: ProviderType;
 
   @ApiPropertyOptional({ example: 'PR' })
   @IsOptional()

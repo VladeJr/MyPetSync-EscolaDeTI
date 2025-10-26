@@ -1,7 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+// import { IsEnum } from 'class-validator';
 import { Document } from 'mongoose';
 
 export type ProviderDocument = Provider & Document;
+
+export enum ProviderType {
+  AUTONOMO = 'autonomo',
+  COMPANY = 'empresa',
+}
 
 @Schema({ timestamps: true, collection: 'providers' })
 export class Provider {
@@ -16,6 +22,14 @@ export class Provider {
     maxlength: 160,
   })
   email: string;
+
+  // @IsEnum({
+  //   type: String,
+  //   enum: ProviderType,
+  //   default: ProviderType.AUTONOMO,
+  //   required: true,
+  // })
+  // type: ProviderType;
 
   @Prop({ trim: true, maxlength: 20 })
   whatsapp?: string;

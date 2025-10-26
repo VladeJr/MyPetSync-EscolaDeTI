@@ -1,9 +1,14 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './guards/auth.guard';
+import { CurrentUser } from 'src/shared/current-user.decorator';
+import { Types } from 'mongoose';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -43,5 +48,23 @@ export class AuthController {
   @ApiOperation({ summary: 'Renova o Access Token usando o Refresh Token.' })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshToken(refreshTokenDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('trocar-senha')
+  async changePassword(
+    @CurrentUser() user: { userId: string },
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      new Types.ObjectId(user.userId),
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
+  @Post('esqueci-senha')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(forgotPasswordDto.email);
   }
 }
