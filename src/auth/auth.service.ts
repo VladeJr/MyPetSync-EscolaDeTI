@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from 'src/users/schemas/user.schema';
+import { User, UserType } from 'src/users/schemas/user.schema';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
@@ -17,6 +17,8 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/reset-token.schema';
 import { MailService } from 'src/mail/mail.service';
+import { ProvidersService } from 'src/providers/providers.service';
+import { TutorsService } from 'src/tutors/tutors.service';
 
 @Injectable()
 export class AuthService {
@@ -28,9 +30,13 @@ export class AuthService {
     private resetTokenModel: Model<ResetToken>,
     private jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly providersService: ProvidersService,
+    private readonly tutorsService: TutorsService,
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
+    const { email, senha, nome, tipo_usuario, type, cpf, cnpj } = createUserDto;
+
     const emailUnico = await this.UserModel.findOne({
       email: createUserDto.email,
     });
@@ -38,14 +44,33 @@ export class AuthService {
       throw new BadRequestException('Este email já está em uso.'); // validação de email
     }
 
-    const senhaHashed = await bcrypt.hash(createUserDto.senha, 10); // hash de senha com saltRounds 10
+    const senhaHashed = await bcrypt.hash(senha, 10); // hash de senha com saltRounds 10
 
-    await this.UserModel.create({
-      nome: createUserDto.nome,
-      email: createUserDto.email,
+    const newUser = await this.UserModel.create({
+      nome: nome,
+      email: email.toLowerCase(),
       senha_hash: senhaHashed,
-      tipo_usuario: createUserDto.tipo_usuario,
-    }); // validação dos dados no dto
+      tipo_usuario: tipo_usuario,
+    });
+
+    const newUserId = (newUser._id as Types.ObjectId).toString();
+
+    if (newUser.tipo_usuario === UserType.TUTOR) {
+      await this.tutorsService.createForUser(newUserId, newUser.nome, {
+        name: newUser.nome,
+      });
+    } else if (newUser.tipo_usuario === UserType.PROVIDER) {
+      await this.providersService.createForUser(
+        newUserId,
+        newUser.email,
+        newUser.nome,
+        type!, // empresa ou autonomo
+        cpf, // se existir
+        cnpj, // se existir
+      );
+    }
+
+    return this.generateUserToken(newUser._id as Types.ObjectId);
   }
 
   async login(loginDto: LoginDto) {

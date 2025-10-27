@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
@@ -6,7 +6,9 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
+  ValidateIf,
 } from 'class-validator';
+import { ProviderType } from 'src/providers/schemas/provider.schema';
 import { UserType } from 'src/users/schemas/user.schema';
 
 export class CreateUserDto {
@@ -38,5 +40,44 @@ export class CreateUserDto {
   @IsEnum(UserType, {
     message: 'O tipo de usuário deve ser tutor ou provedor.',
   })
-  tipo_usuario: string;
+  tipo_usuario: UserType;
+
+  // tipo de prestador
+  @ApiPropertyOptional({
+    example: ProviderType.AUTONOMO,
+    enum: ProviderType,
+    description: 'Tipo de prestador (obrigatório se tipo_usuario for provider)',
+  })
+  @IsEnum(ProviderType)
+  @ValidateIf((dto: CreateUserDto) => dto.tipo_usuario === UserType.PROVIDER)
+  @IsNotEmpty({ message: 'O tipo de prestador é obrigatório.' })
+  type?: ProviderType;
+
+  // cpf obrigatório se for AUTONOMO
+  @ApiPropertyOptional({
+    example: '123.456.789-00',
+    description: 'CPF, obrigatório se o tipo for autonomo.',
+  })
+  @IsString()
+  @ValidateIf(
+    (dto: CreateUserDto) =>
+      dto.tipo_usuario === UserType.PROVIDER &&
+      dto.type === ProviderType.AUTONOMO,
+  )
+  @IsNotEmpty({ message: 'CPF é obrigatório para prestadores autônomos.' })
+  cpf?: string;
+
+  // cnpj obrigatório se for EMPRESA
+  @ApiPropertyOptional({
+    example: '12.345.678/0001-90',
+    description: 'CNPJ, obrigatório se o tipo for empresa.',
+  })
+  @IsString()
+  @ValidateIf(
+    (dto: CreateUserDto) =>
+      dto.tipo_usuario === UserType.PROVIDER &&
+      dto.type === ProviderType.COMPANY,
+  )
+  @IsNotEmpty({ message: 'CNPJ é obrigatório para prestadores PJ.' })
+  cnpj?: string;
 }
