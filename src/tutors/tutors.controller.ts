@@ -7,6 +7,7 @@ import {
   Delete,
   UseGuards,
   Param,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { TutorsService } from './tutors.service';
@@ -14,20 +15,29 @@ import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from '../shared/current-user.decorator';
+import { UsersService } from 'src/users/users.service';
 
 @ApiTags('tutors')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('tutors')
 export class TutorsController {
-  constructor(private readonly tutors: TutorsService) {}
+  constructor(
+    private readonly tutors: TutorsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('me')
   async createMe(
     @CurrentUser() u: { userId: string },
     @Body() dto: CreateTutorDto,
   ) {
-    return this.tutors.createForUser(u.userId, dto);
+    const user = await this.usersService.findByUserId(u.userId);
+    if (!user) {
+      throw new NotFoundException(`Usuário autenticado não encontrado`);
+    }
+
+    return this.tutors.createForUser(u.userId, user.nome, dto);
   }
 
   @Get('me')

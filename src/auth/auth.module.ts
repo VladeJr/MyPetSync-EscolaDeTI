@@ -10,6 +10,8 @@ import {
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ResetToken, ResetTokenSchema } from './schemas/reset-token.schema';
 import { MailService } from 'src/mail/mail.service';
+import { ProvidersModule } from 'src/providers/providers.module';
+import { TutorsModule } from 'src/tutors/tutors.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { MailService } from 'src/mail/mail.service';
         schema: ResetTokenSchema,
       },
     ]),
+    ProvidersModule,
+    TutorsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, MailService],

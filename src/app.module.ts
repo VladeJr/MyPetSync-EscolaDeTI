@@ -47,7 +47,7 @@ import { ExamsModule } from './exams/exams.module';
     UsersModule,
     AppointmentsModule,
     MailModule,
-    ExamsModule
+    ExamsModule,
   ],
   controllers: [],
   providers: [],

@@ -4,8 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
-import { Provider, ProviderDocument } from './schemas/provider.schema';
+import { FilterQuery, Model, Types } from 'mongoose';
+import {
+  Provider,
+  ProviderDocument,
+  ProviderType,
+} from './schemas/provider.schema';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { QueryProviderDto } from './dto/query-provider.dto';
@@ -15,6 +19,31 @@ export class ProvidersService {
   constructor(
     @InjectModel(Provider.name) private readonly model: Model<ProviderDocument>,
   ) {}
+
+  async createForUser(
+    userId: string,
+    email: string,
+    name: string,
+    type: ProviderType,
+    cpf?: string,
+    cnpj?: string,
+  ) {
+    const exists = await this.model.findOne({ userId });
+    if (exists) {
+      throw new ConflictException('Perfil de prestador já existe.');
+    }
+
+    const created = await this.model.create({
+      userId: new Types.ObjectId(userId),
+      name: name,
+      email: email.toLowerCase(),
+      type: type,
+      cpf: cpf,
+      cnpj: cnpj,
+    });
+
+    return created.toObject();
+  }
 
   async create(dto: CreateProviderDto) {
     const email = dto.email.toLowerCase();

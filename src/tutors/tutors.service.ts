@@ -11,8 +11,12 @@ export class TutorsService {
     @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
   ) {}
 
-  async createForUser(userId: string, dto: CreateTutorDto) {
-    return this.model.create({ ...dto, userId: new Types.ObjectId(userId) });
+  async createForUser(userId: string, name: string, dto: CreateTutorDto) {
+    return this.model.create({
+      ...dto,
+      name,
+      userId: new Types.ObjectId(userId),
+    });
   }
 
   async getByUserId(userId: string) {
