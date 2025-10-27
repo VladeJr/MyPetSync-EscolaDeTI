@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { MailModule } from './mail/mail.module';
 import { ExamsModule } from './exams/exams.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -47,7 +48,8 @@ import { ExamsModule } from './exams/exams.module';
     UsersModule,
     AppointmentsModule,
     MailModule,
-    ExamsModule
+    ExamsModule,
+    FilesModule
   ],
   controllers: [],
   providers: [],
