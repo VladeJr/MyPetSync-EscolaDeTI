@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -22,6 +24,8 @@ import { TutorsService } from 'src/tutors/tutors.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(User.name) private UserModel: Model<User>,
     @InjectModel(RefreshToken.name)
@@ -169,5 +173,47 @@ export class AuthService {
     return {
       message: 'Se o usuário existir, um e-mail de redefinição foi enviado.',
     };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const resetTokenDocument = await this.resetTokenModel.findOne({
+      token: token,
+      expiryDate: { $gt: new Date() },
+    });
+    if (!resetTokenDocument) {
+      throw new BadRequestException(
+        `Token de redefinição inválido ou expirado`,
+      );
+    }
+
+    const user = await this.UserModel.findById(resetTokenDocument.userId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    try {
+      const senhaHashed = await bcrypt.hash(newPassword, 10);
+      user.senha_hash = senhaHashed;
+
+      await user.save();
+      await this.resetTokenModel.deleteOne({ _id: resetTokenDocument._id });
+      await this.RefreshTokenModel.deleteMany({ userId: user._id });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Erro ao resetar senha para user: ${error.message}`,
+          error.stack,
+        );
+      } else {
+        this.logger.error(
+          `Erro desconhecido ao resetar senha para user`,
+          String(error),
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'Falha ao redefinir senha. Tente novamente.',
+      );
+    }
   }
 }

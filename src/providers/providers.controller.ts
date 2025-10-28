@@ -19,8 +19,8 @@ import { ProvidersService } from './providers.service';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { QueryProviderDto } from './dto/query-provider.dto';
-
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from 'src/shared/current-user.decorator';
 
 @ApiTags('providers')
 @ApiBearerAuth('access-token')
@@ -41,6 +41,16 @@ export class ProvidersController {
   @ApiOkResponse({ description: 'Lista paginada + filtros' })
   findAll(@Query() q: QueryProviderDto) {
     return this.service.findAll(q);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Atualiza perfil do negócio do Prestador logado' })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso' })
+  async updateMe(
+    @CurrentUser() u: { userId: string },
+    @Body() dto: UpdateProviderDto,
+  ) {
+    return this.service.updateMine(u.userId, dto);
   }
 
   @Get(':id')

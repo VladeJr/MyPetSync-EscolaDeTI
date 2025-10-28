@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 import { Types } from 'mongoose';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -66,5 +67,20 @@ export class AuthController {
   @Post('esqueci-senha')
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({
+    summary:
+      'Finaliza a redefinição de senha, validando o token e salvando a nova senha.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Senha redefinida e sessões antigas invalidadas.',
+  })
+  @ApiResponse({ status: 400, description: 'Token inválido ou expirado.' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: 'Senha redefinida com sucesso.' };
   }
 }

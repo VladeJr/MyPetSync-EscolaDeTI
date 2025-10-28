@@ -39,11 +39,10 @@ export class Provider {
   })
   type: ProviderType;
 
-  // 💡 NOVO: CPF (sparse: true permite que o campo seja único apenas onde existe valor)
+  // (sparse: true permite que o campo seja único apenas onde existe valor)
   @Prop({ type: String, unique: true, sparse: true, maxlength: 14 })
   cpf?: string;
 
-  // 💡 NOVO: CNPJ
   @Prop({ type: String, unique: true, sparse: true, maxlength: 18 })
   cnpj?: string;
 

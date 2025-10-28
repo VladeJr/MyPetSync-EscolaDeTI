@@ -116,6 +116,36 @@ export class ProvidersService {
     return updated;
   }
 
+  // metodo para atualizar perfil do prestador pos signup -> add infos adicionais
+  async updateMine(userId: string, dto: UpdateProviderDto) {
+    if (dto.email) {
+      const email = dto.email.toLowerCase();
+      const conflict = await this.model
+        .findOne({ userId: { $ne: userId }, email })
+        .lean();
+      if (conflict)
+        throw new ConflictException(
+          'O novo e-mail já está em uso por outro prestador.',
+        );
+      dto.email = email;
+    }
+    if (dto.state) dto.state = dto.state.toUpperCase();
+
+    const userId_ = new Types.ObjectId(userId);
+
+    const updated = await this.model.findOneAndUpdate(
+      { userId: userId_ },
+      { $set: dto },
+      { new: true, runValidators: true, lean: true },
+    );
+
+    if (!updated)
+      throw new NotFoundException(
+        'Perfil de Prestador não encontrado para este usuário.',
+      );
+    return updated;
+  }
+
   async remove(id: string) {
     const deleted = await this.model.findByIdAndDelete(id).lean();
     if (!deleted) throw new NotFoundException('Prestador não encontrado.');

@@ -80,4 +80,14 @@ export class CreateUserDto {
   )
   @IsNotEmpty({ message: 'CNPJ é obrigatório para prestadores PJ.' })
   cnpj?: string;
+
+  @ApiPropertyOptional({
+    example: 'Clínica Veterinária',
+    description:
+      'Serviço principal oferecido (obrigatório se tipo_usuario for provider)',
+  })
+  @IsString({ message: 'O serviço deve ser uma string.' })
+  @ValidateIf((dto: CreateUserDto) => dto.tipo_usuario === UserType.PROVIDER)
+  @IsNotEmpty({ message: 'O serviço é obrigatório.' })
+  service?: string;
 }
