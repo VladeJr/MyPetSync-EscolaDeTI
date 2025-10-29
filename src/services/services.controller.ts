@@ -30,7 +30,6 @@ export class ServicesController {
     @Body() dto: CreateServiceDto,
     @Param('providerId') providerId?: string,
   ) {
-    // se vier aninhado, sobrescreve provider pelo path param
     if (providerId) {
       const { provider, ...payload } = dto;
       return this.service.createForProvider(providerId, payload);
