@@ -6,14 +6,19 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
 import { Pet, PetDocument } from '../pets/schemas/pets.schema';
-import { Provider, ProviderDocument } from '../providers/schemas/provider.schema';
+import {
+  Provider,
+  ProviderDocument,
+} from '../providers/schemas/provider.schema';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
-    @InjectModel(Appointment.name) private readonly model: Model<AppointmentDocument>,
+    @InjectModel(Appointment.name)
+    private readonly model: Model<AppointmentDocument>,
     @InjectModel(Pet.name) private readonly petModel: Model<PetDocument>,
-    @InjectModel(Provider.name) private readonly providerModel: Model<ProviderDocument>,
+    @InjectModel(Provider.name)
+    private readonly providerModel: Model<ProviderDocument>,
   ) {}
 
   private async assertPet(id: string | Types.ObjectId) {
@@ -37,20 +42,26 @@ export class AppointmentsService {
     return created.toObject();
   }
 
-  async createForPet(petId: string, payload: Omit<CreateAppointmentDto, 'pet'>) {
+  async createForPet(
+    petId: string,
+    payload: Omit<CreateAppointmentDto, 'pet'>,
+  ) {
     return this.create({ ...payload, pet: petId });
   }
-  async createForProvider(providerId: string, payload: Omit<CreateAppointmentDto, 'provider'>) {
+  async createForProvider(
+    providerId: string,
+    payload: Omit<CreateAppointmentDto, 'provider'>,
+  ) {
     return this.create({ ...payload, provider: providerId });
   }
-
   async findAll(q: QueryAppointmentDto) {
     const filter: FilterQuery<AppointmentDocument> = {};
-
-    if (q.pet) filter.pet = new Types.ObjectId(q.pet);
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
-    if (q.status) filter.status = q.status;
-
+    if (q.pet) filter.pet = new Types.ObjectId(q.pet);
+    if (q.status) {
+      const statusArray = q.status.split(',');
+      filter.status = { $in: statusArray };
+    }
     if (q.q) {
       filter.$or = [
         { reason: { $regex: q.q, $options: 'i' } },
@@ -58,13 +69,14 @@ export class AppointmentsService {
         { notes: { $regex: q.q, $options: 'i' } },
       ];
     }
-
-    if (q.from || q.to) {
+    const dateFromValue = q.dateFrom || q.from;
+    const dateToValue = q.to;
+    if (dateFromValue || dateToValue) {
       filter.dateTime = {};
-      if (q.from) (filter.dateTime as any).$gte = new Date(q.from);
-      if (q.to)   (filter.dateTime as any).$lte = new Date(q.to);
+      if (dateFromValue)
+        (filter.dateTime as any).$gte = new Date(dateFromValue);
+      if (dateToValue) (filter.dateTime as any).$lte = new Date(dateToValue);
     }
-
     if (q.minPrice || q.maxPrice) {
       filter.price = {};
       if (q.minPrice) (filter.price as any).$gte = Number(q.minPrice);
@@ -74,25 +86,33 @@ export class AppointmentsService {
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
-    const sort: Record<string, SortOrder> = q.asc === 'true' ? { dateTime: 1 } : { dateTime: -1, createdAt: -1 };
 
+    let sort: Record<string, SortOrder>;
+    if (q.sort) {
+      sort = { [q.sort]: 1 };
+    } else {
+      sort =
+        q.asc === 'true' ? { dateTime: 1 } : { dateTime: -1, createdAt: -1 };
+    }
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate('pet', 'name species')
-        .populate('provider', 'name email city state')
-        .sort(sort).skip(skip).limit(limit).lean(),
+        .populate('pet', 'name species owner')
+        .populate('provider', 'name email city state whatsapp')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       this.model.countDocuments(filter),
     ]);
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
-
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate('pet', 'name species')
-      .populate('provider', 'name email city state')
+      .populate('pet', 'name species owner')
+      .populate('provider', 'name email city state whatsapp')
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
     return found;
@@ -105,7 +125,9 @@ export class AppointmentsService {
     if (dto.dateTime) payload.dateTime = new Date(dto.dateTime);
 
     const updated = await this.model.findByIdAndUpdate(
-      id, { $set: payload }, { new: true, runValidators: true, lean: true },
+      id,
+      { $set: payload },
+      { new: true, runValidators: true, lean: true },
     );
     if (!updated) throw new NotFoundException('Consulta não encontrada.');
     return updated;
