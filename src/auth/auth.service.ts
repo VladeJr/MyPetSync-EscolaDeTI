@@ -45,10 +45,10 @@ export class AuthService {
       email: createUserDto.email,
     });
     if (emailUnico) {
-      throw new BadRequestException('Este email já está em uso.'); // validação de email
+      throw new BadRequestException('Este email já está em uso.');
     }
 
-    const senhaHashed = await bcrypt.hash(senha, 10); // hash de senha com saltRounds 10
+    const senhaHashed = await bcrypt.hash(senha, 10);
 
     const newUser = await this.UserModel.create({
       nome: nome,
@@ -68,9 +68,9 @@ export class AuthService {
         newUserId,
         newUser.email,
         newUser.nome,
-        type!, // empresa ou autonomo
-        cpf, // se existir
-        cnpj, // se existir
+        type!,
+        cpf,
+        cnpj,
       );
     }
 
@@ -78,13 +78,11 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    // procurar se o usuário existe por email
     const user = await this.UserModel.findOne({ email: loginDto.email });
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    // comparação da senha existente com a senha hash
     const passwordMatch = await bcrypt.compare(loginDto.senha, user.senha_hash);
     if (!passwordMatch) {
       throw new UnauthorizedException('Credenciais inválidas.');
@@ -107,11 +105,8 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId) {
-    const accessToken = this.jwtService.sign(
-      { userId: userId.toString() }, // garante string no payload do JWT
-      { expiresIn: '3d' },
-    );
-    const refreshToken = uuidv4(); // id unico para o refresh token
+    const accessToken = this.jwtService.sign({ userId: userId.toString() });
+    const refreshToken = uuidv4();
 
     await this.salvarRefreshToken(refreshToken, userId);
 
@@ -122,8 +117,6 @@ export class AuthService {
   }
 
   async salvarRefreshToken(token: string, userId: Types.ObjectId) {
-    // calcula a data de validade do refresh token,
-    // setado para 3 dias a partir de agora
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 3);
 
