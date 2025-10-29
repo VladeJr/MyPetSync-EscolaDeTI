@@ -105,7 +105,9 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId) {
-    const accessToken = this.jwtService.sign({ userId: userId.toString() });
+    const accessToken = this.jwtService.sign(
+      { userId: userId.toString() }, // Usa a expiração de 1d do AuthModule
+    );
     const refreshToken = uuidv4();
 
     await this.salvarRefreshToken(refreshToken, userId);
