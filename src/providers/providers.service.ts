@@ -93,6 +93,17 @@ export class ProvidersService {
     return found;
   }
 
+  async findOneByUserId(userId: string) {
+    const userIdObj = new Types.ObjectId(userId);
+
+    const found = await this.model.findOne({ userId: userIdObj }).lean();
+    if (!found) {
+      throw new NotFoundException(`Perfil de prestador não encontrado.`);
+    }
+
+    return found;
+  }
+
   async update(id: string, dto: UpdateProviderDto) {
     if (dto.email) {
       const email = dto.email.toLowerCase();

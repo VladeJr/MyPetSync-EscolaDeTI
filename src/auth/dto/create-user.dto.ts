@@ -88,6 +88,5 @@ export class CreateUserDto {
   })
   @IsString({ message: 'O serviço deve ser uma string.' })
   @ValidateIf((dto: CreateUserDto) => dto.tipo_usuario === UserType.PROVIDER)
-  @IsNotEmpty({ message: 'O serviço é obrigatório.' })
   service?: string;
 }
