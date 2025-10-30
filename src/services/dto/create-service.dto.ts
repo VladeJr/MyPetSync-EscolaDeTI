@@ -17,6 +17,7 @@ export class CreateServiceDto {
     description: 'ID do prestador (ObjectId)',
     example: '66f1d9d1c6a7bcf0b1a9c123',
   })
+  @IsOptional()
   @IsMongoId()
   provider: string;
 

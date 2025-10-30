@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBooleanString,
+  IsEnum,
   IsMongoId,
   IsNumberString,
   IsOptional,
@@ -56,4 +57,9 @@ export class QueryServiceDto {
   @IsOptional()
   @IsNumberString()
   limit?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], example: 'desc' })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  order?: 'asc' | 'desc';
 }

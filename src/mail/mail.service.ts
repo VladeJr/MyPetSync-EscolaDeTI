@@ -1,19 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { SentMessageInfo, Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
-
-// add tipagem
-interface MailConfig {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
-  from: string;
-}
 
 @Injectable()
 export class MailService {
@@ -25,33 +14,38 @@ export class MailService {
   }
 
   private createTransporter() {
-    const mailConfig = this.configService.get<MailConfig>('mail')!;
+    const host = this.configService.get<string>('MAIL_HOST');
+    const port = Number(this.configService.get<string>('MAIL_PORT'));
+    const user = this.configService.get<string>('MAIL_USER');
+    const pass = this.configService.get<string>('MAIL_PASS');
 
     this.transporter = nodemailer.createTransport({
-      host: mailConfig.host,
-      port: mailConfig.port,
-      secure: mailConfig.port === 465,
+      host,
+      port,
+      secure: port === 465, // SSL verdadeiro apenas p 465
       auth: {
-        user: mailConfig.user,
-        pass: mailConfig.pass,
+        user,
+        pass,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
     this.logger.log(
-      `Nodemailer transporter inicializado para o host: ${mailConfig.host}`,
+      `📧 Nodemailer configurado -> ${host}:${port} (usuário: ${user})`,
     );
   }
 
   async sendMail(to: string, subject: string, html: string): Promise<void> {
     const mailOptions: Mail.Options = {
-      from: this.configService.get<string>('mail.from'),
-      to: to,
-      subject: subject,
-      html: html,
+      from: this.configService.get<string>('MAIL_FROM'),
+      to,
+      subject,
+      html,
     };
 
     try {
-      // nodemailer faz o envio
       const info: SentMessageInfo =
         await this.transporter.sendMail(mailOptions);
       this.logger.log(
@@ -65,13 +59,17 @@ export class MailService {
     }
   }
 
-  async sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
-    const subject = 'MyPetSync: Redefinição de Senha Solicitada';
+  async sendPasswordResetEmail(to: string, code: string): Promise<void> {
+    const subject = 'MyPetSync: Código de Verificação de Senha';
     const htmlContent = `
-      <h1>Redefinição de Senha</h1>
-      <p>Você solicitou a redefinição de senha. Clique no link abaixo para continuar:</p>
-      <a href="${resetLink}">Redefinir Minha Senha</a>
-      <p>Se você não solicitou esta alteração, por favor ignore este e-mail.</p>
+      <h1>Código de Verificação</h1>
+      <p>Você solicitou a redefinição de senha. Use o código abaixo para redefini-la:</p>
+      
+      <div style="background-color: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center;">
+        <h2 style="color: #007bff; margin: 0; font-size: 32px;">${code}</h2>
+      </div>
+      
+      <p>Este código é válido por 1 hora. Se você não solicitou esta alteração, por favor ignore este e-mail.</p>
     `;
 
     await this.sendMail(to, subject, htmlContent);

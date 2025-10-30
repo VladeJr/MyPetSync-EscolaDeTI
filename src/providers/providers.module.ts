@@ -4,6 +4,7 @@ import { ProvidersController } from './providers.controller';
 import { ProvidersService } from './providers.service';
 import { Provider, ProviderSchema } from './schemas/provider.schema';
 import { AppointmentsModule } from 'src/appointments/appointments.module';
+import { ServicesModule } from 'src/services/services.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { AppointmentsModule } from 'src/appointments/appointments.module';
       { name: Provider.name, schema: ProviderSchema },
     ]),
     forwardRef(() => AppointmentsModule), // quebra de dependencia circular
+    forwardRef(() => ServicesModule),
   ],
   controllers: [ProvidersController],
   providers: [ProvidersService],

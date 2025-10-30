@@ -23,6 +23,10 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 import { AppointmentsService } from 'src/appointments/appointments.service';
 import { QueryAppointmentDto } from 'src/appointments/dto/query-appointment.dto';
+import { QueryServiceDto } from 'src/services/dto/query-service.dto';
+import { ServicesService } from 'src/services/services.service';
+import { CreateServiceDto } from 'src/services/dto/create-service.dto';
+import { Types } from 'mongoose';
 
 @ApiTags('providers')
 @ApiBearerAuth('access-token')
@@ -32,6 +36,7 @@ export class ProvidersController {
   constructor(
     private readonly service: ProvidersService,
     private readonly appointmentsService: AppointmentsService,
+    private readonly servicesService: ServicesService,
   ) {}
 
   @Get('me')
@@ -39,6 +44,16 @@ export class ProvidersController {
   @ApiOkResponse({ description: 'Perfil do Prestador.' })
   async findMe(@CurrentUser() u: { userId: string }) {
     return this.service.findOneByUserId(u.userId);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Atualiza perfil do negócio do Prestador logado' })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso' })
+  async updateMe(
+    @CurrentUser() u: { userId: string },
+    @Body() dto: UpdateProviderDto,
+  ) {
+    return this.service.updateMine(u.userId, dto);
   }
 
   // tratará do recurso autenticado - prestador logado
@@ -54,14 +69,32 @@ export class ProvidersController {
     return this.appointmentsService.findAllByProviderUser(user.userId, q);
   }
 
-  @Patch('me')
-  @ApiOperation({ summary: 'Atualiza perfil do negócio do Prestador logado' })
-  @ApiOkResponse({ description: 'Perfil atualizado com sucesso' })
-  async updateMe(
-    @CurrentUser() u: { userId: string },
-    @Body() dto: UpdateProviderDto,
+  @Get('/me/services')
+  @ApiOperation({
+    summary: 'Lista os serviços do Prestador logado (via JWT).',
+  })
+  @ApiOkResponse({ description: 'Lista paginada e filtrada de serviços.' })
+  async findAllMyServices(
+    @CurrentUser() user: { userId: string },
+    @Query() q: QueryServiceDto,
   ) {
-    return this.service.updateMine(u.userId, dto);
+    return this.servicesService.findAllByProviderUser(user.userId, q);
+  }
+
+  @Post('/me/services')
+  @ApiOperation({ summary: 'Cria um novo serviço para o Prestador logado.' })
+  @ApiOkResponse({ description: 'Serviço criado com sucesso.' })
+  async createService(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: Omit<CreateServiceDto, 'provider'>,
+  ) {
+    const provider = await this.service.findOneByUserId(user.userId);
+    const createDto: CreateServiceDto = {
+      ...dto,
+      provider: (provider._id as Types.ObjectId).toHexString(),
+    } as CreateServiceDto;
+
+    return this.servicesService.create(createDto);
   }
 
   @Post()
