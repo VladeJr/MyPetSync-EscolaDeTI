@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -31,9 +32,19 @@ export class ServicesController {
     @Param('providerId') providerId?: string,
   ) {
     if (providerId) {
-      const { provider, ...payload } = dto;
-      return this.service.createForProvider(providerId, payload);
+      const { ...rest } = dto;
+      const serviceDto: CreateServiceDto = {
+        ...rest,
+        provider: providerId,
+      } as CreateServiceDto;
+      return this.service.create(serviceDto);
     }
+    if (!dto.provider) {
+      throw new BadRequestException(
+        'Na rota global, o ID do prestador (provider) é obrigatório no corpo.',
+      );
+    }
+
     return this.service.create(dto);
   }
 

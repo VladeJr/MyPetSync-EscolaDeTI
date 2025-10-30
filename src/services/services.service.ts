@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, Types } from 'mongoose';
+import { FilterQuery, Model, SortOrder, Types } from 'mongoose';
 import { Service, ServiceDocument } from './schemas/service.schema';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -13,6 +13,7 @@ import {
   Provider,
   ProviderDocument,
 } from '../providers/schemas/provider.schema';
+import { ProvidersService } from 'src/providers/providers.service';
 
 @Injectable()
 export class ServicesService {
@@ -20,6 +21,7 @@ export class ServicesService {
     @InjectModel(Service.name) private readonly model: Model<ServiceDocument>,
     @InjectModel(Provider.name)
     private readonly providerModel: Model<ProviderDocument>,
+    private readonly providersService: ProvidersService,
   ) {}
 
   private async assertProvider(providerId: string | Types.ObjectId) {
@@ -71,11 +73,15 @@ export class ServicesService {
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
 
+    const sort: Record<string, SortOrder> = {
+      createdAt: q.order === 'asc' ? 1 : -1,
+    };
+
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
         .populate('provider', 'name email city state isActive')
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -132,5 +138,12 @@ export class ServicesService {
 
   async removeByProvider(providerId: string | Types.ObjectId) {
     await this.model.deleteMany({ provider: providerId as any });
+  }
+
+  async findAllByProviderUser(userId: string, q: QueryServiceDto) {
+    const provider = await this.providersService.findOneByUserId(userId);
+    const providerId = (provider._id as Types.ObjectId).toHexString();
+
+    return this.findAll({ ...q, provider: providerId });
   }
 }

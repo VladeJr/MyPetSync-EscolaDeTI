@@ -16,11 +16,15 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/reset-token.schema';
 import { MailService } from 'src/mail/mail.service';
 import { ProvidersService } from 'src/providers/providers.service';
 import { TutorsService } from 'src/tutors/tutors.service';
+
+function generateCode(): string {
+  // gera um número entre 100000 e 999999 - 6 digitos
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 @Injectable()
 export class AuthService {
@@ -151,23 +155,38 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.UserModel.findOne({ email });
+    const user = await this.UserModel.findOne({ email: email.toLowerCase() });
 
-    if (user) {
-      const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 1);
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`Solicitação de recuperação de senha para: ${email}`);
+    }
+    if (!user) {
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.log(`E-mail não encontrado: ${email}`);
+      }
+      return {
+        message: 'Se o usuário existir, um e-mail de redefinição foi enviado.',
+      };
+    }
 
-      const resetToken = nanoid(64);
-      await this.resetTokenModel.create({
-        token: resetToken,
-        userId: user._id,
-        expiryDate,
-      });
+    const expiryDate = new Date();
+    expiryDate.setHours(expiryDate.getHours() + 1);
+    const resetCode = generateCode();
+    await this.resetTokenModel.create({
+      token: resetCode,
+      userId: user._id,
+      expiryDate,
+    });
 
-      const frontendUrl = 'http://localhost:5173';
-      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+    try {
+      await this.mailService.sendPasswordResetEmail(user.email, resetCode);
+    } catch (mailError) {
+      this.logger.error('Falha ao enviar e-mail de redefinição.', mailError);
+    }
 
-      await this.mailService.sendPasswordResetEmail(user.email, resetLink);
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`E-mail de redefinição enviado para: ${user.email}`);
+      this.logger.log(`CÓDIGO de redefinição (para log): ${resetCode}`);
     }
 
     return {
@@ -182,7 +201,7 @@ export class AuthService {
     });
     if (!resetTokenDocument) {
       throw new BadRequestException(
-        `Token de redefinição inválido ou expirado`,
+        `Código de redefinição inválido ou expirado`,
       );
     }
 
@@ -210,7 +229,6 @@ export class AuthService {
           String(error),
         );
       }
-
       throw new InternalServerErrorException(
         'Falha ao redefinir senha. Tente novamente.',
       );

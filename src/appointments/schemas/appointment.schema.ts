@@ -12,25 +12,30 @@ export class Appointment {
   provider: Types.ObjectId;
 
   @Prop({ required: true })
-  dateTime: Date;              // data/hora da consulta
+  dateTime: Date; // data/hora da consulta
 
   @Prop({ type: Number, min: 0, default: 30 })
-  duration: number;            // minutos
+  duration: number; // minutos
 
   @Prop({ type: String, trim: true, maxlength: 120 })
-  reason?: string;             // motivo (queixa)
+  reason?: string; // motivo (queixa)
 
   @Prop({ type: String, trim: true, maxlength: 200 })
-  location?: string;           // endereço/clinica (se aplicável)
+  location?: string; // endereço/clinica (se aplicável)
 
   @Prop({ type: Number, min: 0, default: 0 })
-  price: number;               // valor em R$
+  price: number; // valor em R$
 
-  @Prop({ type: String, enum: ['scheduled', 'completed', 'canceled'], default: 'scheduled', index: true })
+  @Prop({
+    type: String,
+    enum: ['scheduled', 'completed', 'canceled'],
+    default: 'scheduled',
+    index: true,
+  })
   status: 'scheduled' | 'completed' | 'canceled';
 
   @Prop({ type: String })
-  notes?: string;              // observações/condutas
+  notes?: string; // observações/condutas
 }
 
 export const AppointmentSchema = SchemaFactory.createForClass(Appointment);
