@@ -14,6 +14,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { MailModule } from './mail/mail.module';
 import { ExamsModule } from './exams/exams.module';
 import { FilesModule } from './files/files.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { FilesModule } from './files/files.module';
     AppointmentsModule,
     MailModule,
     ExamsModule,
-    FilesModule
+    FilesModule,
+    ReviewsModule
   ],
   controllers: [],
   providers: [],
