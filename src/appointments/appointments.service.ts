@@ -67,11 +67,12 @@ export class AppointmentsService {
 
   async findAll(q: QueryAppointmentDto) {
     const filter: FilterQuery<AppointmentDocument> = {};
-
-    if (q.pet) filter.pet = new Types.ObjectId(q.pet);
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
-    if (q.status) filter.status = q.status;
-
+    if (q.pet) filter.pet = new Types.ObjectId(q.pet);
+    if (q.status) {
+      const statusArray = q.status.split(',');
+      filter.status = { $in: statusArray };
+    }
     if (q.q) {
       filter.$or = [
         { reason: { $regex: q.q, $options: 'i' } },
@@ -79,13 +80,13 @@ export class AppointmentsService {
         { notes: { $regex: q.q, $options: 'i' } },
       ];
     }
-
-    if (q.from || q.to) {
+    const dateFromValue = q.dateFrom || q.from;
+    const dateToValue = q.to;
+    if (dateFromValue || dateToValue) {
       filter.dateTime = {};
-      if (q.from) filter.dateTime.$gte = new Date(q.from);
-      if (q.to) filter.dateTime.$lte = new Date(q.to);
+      if (q.from) (filter.dateTime as any).$gte = new Date(q.from);
+      if (q.to) (filter.dateTime as any).$lte = new Date(q.to);
     }
-
     if (q.minPrice || q.maxPrice) {
       filter.price = {};
       if (q.minPrice) filter.price.$gte = Number(q.minPrice);
@@ -95,8 +96,16 @@ export class AppointmentsService {
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
-    const sort: Record<string, SortOrder> =
+
+    const sortAsc: Record<string, SortOrder> =
       q.asc === 'true' ? { dateTime: 1 } : { dateTime: -1, createdAt: -1 };
+
+    let sort: Record<string, SortOrder>;
+    if (q.sort) {
+      sort = { [q.sort]: 1 };
+    } else {
+      sort = sortAsc;
+    }
 
     const [items, total] = await Promise.all([
       this.model
@@ -112,12 +121,11 @@ export class AppointmentsService {
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
-
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate('pet', 'name species')
-      .populate('provider', 'name email city state')
+      .populate('pet', 'name species owner')
+      .populate('provider', 'name email city state whatsapp')
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
     return found;
