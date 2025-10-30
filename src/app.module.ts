@@ -4,7 +4,7 @@ import { PetsModule } from './pets/pets.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config from './config/config';
-import { JwtModule } from '@nestjs/jwt';
+// import { JwtModule } from '@nestjs/jwt'; // JwtModule não é importado aqui
 import { TutorsModule } from './tutors/tutors.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProvidersModule } from './providers/providers.module';
@@ -22,16 +22,7 @@ import { ReviewsModule } from './reviews/reviews.module';
       isGlobal: true,
       load: [config],
     }), // modulo de config para pegar os dados sensiveis de database e secret key jwt
-
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      global: true,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get('jwt.secret'),
-      }),
-    }),
-
+    // 🛑 REMOVIDO: JwtModule.registerAsync GLOBAL para evitar conflito de configuração.
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -51,7 +42,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     MailModule,
     ExamsModule,
     FilesModule,
-    ReviewsModule
+    ReviewsModule, // Mesclado: Módulo ReviewsModule mantido.
   ],
   controllers: [],
   providers: [],

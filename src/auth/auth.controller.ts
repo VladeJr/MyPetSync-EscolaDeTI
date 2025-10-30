@@ -10,6 +10,7 @@ import { CurrentUser } from 'src/shared/current-user.decorator';
 import { Types } from 'mongoose';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -25,7 +26,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Realiza o login e gera Access e Refresh Tokens.' }) // 💡 Descrição da Operação
+  @ApiOperation({ summary: 'Realiza o login e gera Access e Refresh Tokens.' })
   @ApiResponse({
     status: 200,
     description: 'Login bem-sucedido, retorna tokens.',
@@ -65,8 +66,31 @@ export class AuthController {
   }
 
   @Post('esqueci-senha')
+  @ApiOperation({
+    summary: 'Solicita a redefinição de senha e envia o código por e-mail.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'E-mail de redefinição enviado com sucesso (ou de forma silenciosa).',
+  })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.authService.forgotPassword(forgotPasswordDto.email);
+    return {
+      message: 'Se o usuário existir, um e-mail de redefinição foi enviado.',
+    };
+  }
+
+  @Post('verify-code')
+  @ApiOperation({
+    summary:
+      'Verifica se o código de redefinição de senha é válido e não expirou.',
+  })
+  @ApiResponse({ status: 200, description: 'Código válido.' })
+  @ApiResponse({ status: 400, description: 'Código inválido ou expirado.' })
+  async verifyResetCode(@Body() dto: VerifyResetCodeDto) {
+    await this.authService.verifyResetCode(dto.email, dto.code);
+    return { message: 'Código verificado com sucesso.' };
   }
 
   @Post('reset-password')
