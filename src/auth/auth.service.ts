@@ -108,14 +108,19 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId) {
-    const accessToken = this.jwtService.sign({ userId: userId.toString() });
+    const accessToken = this.jwtService.sign(
+      { userId: userId.toString() },
+      { expiresIn: '1d' },
+    );
     const refreshToken = uuidv4();
 
     await this.salvarRefreshToken(refreshToken, userId);
 
     return {
-      accessToken,
-      refreshToken,
+      token: accessToken,
+      user: {
+        id: userId,
+      },
     };
   }
 
