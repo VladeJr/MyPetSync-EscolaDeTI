@@ -25,6 +25,7 @@ export class ProvidersService {
     email: string,
     name: string,
     type: ProviderType,
+    service: string,
     cpf?: string,
     cnpj?: string,
   ) {
@@ -38,6 +39,7 @@ export class ProvidersService {
       name: name,
       email: email.toLowerCase(),
       type: type,
+      service: service,
       cpf: cpf,
       cnpj: cnpj,
     });
@@ -127,7 +129,6 @@ export class ProvidersService {
     return updated;
   }
 
-  // metodo para atualizar perfil do prestador pos signup -> add infos adicionais
   async updateMine(userId: string, dto: UpdateProviderDto) {
     if (dto.email) {
       const email = dto.email.toLowerCase();

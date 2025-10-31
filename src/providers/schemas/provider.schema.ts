@@ -39,6 +39,9 @@ export class Provider {
   })
   type: ProviderType;
 
+  @Prop({ required: false, trim: true, maxlength: 80 })
+  service?: string;
+
   // (sparse: true permite que o campo seja único apenas onde existe valor)
   @Prop({ type: String, unique: true, sparse: true, maxlength: 14 })
   cpf?: string;
