@@ -21,8 +21,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
-    }), // modulo de config para pegar os dados sensiveis de database e secret key jwt
-    // 🛑 REMOVIDO: JwtModule.registerAsync GLOBAL para evitar conflito de configuração.
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -42,7 +41,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     MailModule,
     ExamsModule,
     FilesModule,
-    ReviewsModule, // Mesclado: Módulo ReviewsModule mantido.
+    ReviewsModule,
   ],
   controllers: [],
   providers: [],
