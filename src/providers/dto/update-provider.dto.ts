@@ -1,6 +1,6 @@
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateProviderDto } from './create-provider.dto';
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
 
 export class UpdateProviderDto extends PartialType(CreateProviderDto) {
   @ApiPropertyOptional()
@@ -21,6 +21,11 @@ export class UpdateProviderDto extends PartialType(CreateProviderDto) {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @ApiPropertyOptional()
@@ -32,4 +37,26 @@ export class UpdateProviderDto extends PartialType(CreateProviderDto) {
   @IsOptional()
   @IsString()
   bio?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  number?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  openingHours?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  servicesOffered?: string[];
 }
