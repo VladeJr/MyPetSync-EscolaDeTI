@@ -9,7 +9,6 @@ import {
   IsString,
 } from 'class-validator';
 
-// Criamos um array de strings literais que representa o Enum
 const AppointmentStatus = ['scheduled', 'completed', 'canceled', 'confirmed'];
 
 export class QueryAppointmentDto {
