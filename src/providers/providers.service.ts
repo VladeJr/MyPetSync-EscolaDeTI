@@ -70,7 +70,7 @@ export class ProvidersService {
         $elemMatch: { $regex: q.service, $options: 'i' },
       };
     if (q.q) filter.name = { $regex: q.q, $options: 'i' };
-    if (q.type) filter.type = q.type; // filtro por tipo autonomo ou company
+    if (q.type) filter.type = q.type;
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
@@ -130,24 +130,26 @@ export class ProvidersService {
   }
 
   async updateMine(userId: string, dto: UpdateProviderDto) {
-    if (dto.email) {
-      const email = dto.email.toLowerCase();
+    const payload = { ...dto };
+
+    if (payload.email) {
+      payload.email = payload.email.toLowerCase();
       const conflict = await this.model
-        .findOne({ userId: { $ne: userId }, email })
+        .findOne({ userId: { $ne: userId }, email: payload.email })
         .lean();
       if (conflict)
         throw new ConflictException(
           'O novo e-mail já está em uso por outro prestador.',
         );
-      dto.email = email;
     }
-    if (dto.state) dto.state = dto.state.toUpperCase();
+
+    if (payload.state) payload.state = payload.state.toUpperCase();
 
     const userId_ = new Types.ObjectId(userId);
 
     const updated = await this.model.findOneAndUpdate(
       { userId: userId_ },
-      { $set: dto },
+      { $set: payload },
       { new: true, runValidators: true, lean: true },
     );
 
