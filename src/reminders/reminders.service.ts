@@ -3,7 +3,6 @@ import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { addDays, addMonths, addWeeks, subMinutes } from 'date-fns';
-
 import { Reminder, ReminderDocument } from './schemas/reminder.schema.js';
 import { CreateReminderDto } from './dto/create-reminder.dto.js';
 import { UpdateReminderDto } from './dto/update-reminder.dto.js';
@@ -137,7 +136,7 @@ export class RemindersService {
     const due = await this.model.find({
       status: 'active',
       nextRunAt: { $lte: now },
-    }).limit(200); // lot size control
+    }).limit(200).exec() as ReminderDocument[]; // lot size control
 
     if (!due.length) return;
 
@@ -147,10 +146,9 @@ export class RemindersService {
         const title = r.title;
         const body = r.message || 'Você tem um lembrete no MyPetSync.';
         await this.notifications.send(
-          { title, body, data: { type: 'reminder', reminderId: r._id.toString(), petId: r.pet?.toString() || '' } },
-          r.user.toString(),
+            { title, body, data: { type: 'reminder', reminderId: (r._id as Types.ObjectId).toString(), petId: r.pet ? (r.pet as Types.ObjectId).toString() : '' } },
+            r.user.toString(),
         );
-
         // Reprograma próxima execução ou conclui
         if (r.repeat === 'none') {
           r.status = 'done';
