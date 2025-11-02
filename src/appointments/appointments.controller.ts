@@ -16,6 +16,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from 'src/shared/current-user.decorator';
 
 @ApiTags('appointments')
 @ApiBearerAuth()
@@ -73,15 +74,21 @@ export class AppointmentsController {
   @Get()
   @ApiOkResponse({ description: 'Lista paginada + filtros' })
   findAll(
+    @CurrentUser() user: { userId: string },
     @Query() q: QueryAppointmentDto,
     @Param('petId') petId?: string,
     @Param('providerId') providerId?: string,
   ) {
-    return this.service.findAll({
-      ...q,
-      ...(petId ? { pet: petId } : {}),
-      ...(providerId ? { provider: providerId } : {}),
-    });
+    if (petId || providerId) {
+      return this.service.findAll({
+        ...q,
+        ...(petId ? { pet: petId } : {}),
+        ...(providerId ? { provider: providerId } : {}),
+      });
+    }
+
+    // Se a rota for /appointments, filtra pelo usuário logado.
+    return this.service.findAllByProviderUser(user.userId, q);
   }
 
   @Get(':id')

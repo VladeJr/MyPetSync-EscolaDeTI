@@ -9,6 +9,8 @@ import {
   IsString,
 } from 'class-validator';
 
+const AppointmentStatus = ['scheduled', 'completed', 'canceled', 'confirmed'];
+
 export class QueryAppointmentDto {
   @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9caaa' })
   @IsOptional()
@@ -20,10 +22,13 @@ export class QueryAppointmentDto {
   @IsMongoId()
   provider?: string;
 
-  @ApiPropertyOptional({ enum: ['scheduled', 'completed', 'canceled'] })
+  @ApiPropertyOptional({
+    enum: AppointmentStatus,
+    isArray: true,
+  })
   @IsOptional()
-  @IsEnum(['scheduled', 'completed', 'canceled'])
-  status?: 'scheduled' | 'completed' | 'canceled';
+  @IsEnum(AppointmentStatus, { each: true })
+  status?: string | string[];
 
   @ApiPropertyOptional({
     description: 'Busca livre (reason/location)',

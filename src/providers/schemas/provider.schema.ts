@@ -39,12 +39,20 @@ export class Provider {
   })
   type: ProviderType;
 
-  // (sparse: true permite que o campo seja único apenas onde existe valor)
+  @Prop({ required: false, trim: true, maxlength: 80 })
+  service?: string;
+
+  @Prop({ type: [String], default: [] })
+  openingHours?: string[];
+
   @Prop({ type: String, unique: true, sparse: true, maxlength: 14 })
   cpf?: string;
 
   @Prop({ type: String, unique: true, sparse: true, maxlength: 18 })
   cnpj?: string;
+
+  @Prop({ type: String, trim: true, maxlength: 20 })
+  phone?: string;
 
   @Prop({ trim: true, maxlength: 20 })
   whatsapp?: string;
@@ -53,7 +61,13 @@ export class Provider {
   city?: string;
 
   @Prop({ trim: true, uppercase: true, minlength: 2, maxlength: 2 })
-  state?: string; // UF
+  state?: string;
+
+  @Prop({ type: String, trim: true, maxlength: 100 })
+  street?: string;
+
+  @Prop({ trim: true, maxlength: 20 })
+  number?: string;
 
   @Prop({ type: Number })
   latitude?: number;

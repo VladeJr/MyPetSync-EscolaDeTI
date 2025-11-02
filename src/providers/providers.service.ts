@@ -169,6 +169,7 @@ export class ProvidersService {
       if (Object.keys(updatePayloadUser).length > 0) {
         await this.usersService.updateUserProfile(userId, updatePayloadUser);
 
+        // Atualiza o payload do Provider
         if (updatePayloadUser.email) {
           payload.email = updatePayloadUser.email;
         } else {
@@ -176,7 +177,7 @@ export class ProvidersService {
         }
 
         if (updatePayloadUser.nome) {
-          payload.name = updatePayloadUser.nome; 
+          payload.name = updatePayloadUser.nome;
         } else {
           delete payload.name;
         }
