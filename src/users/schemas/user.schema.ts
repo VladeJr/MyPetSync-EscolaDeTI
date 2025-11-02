@@ -1,5 +1,7 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+
+export type UserDocument = User & Document;
 
 export enum UserType {
   TUTOR = 'tutor',
@@ -23,7 +25,7 @@ export class User extends Document {
   @Prop()
   foto_perfil: string;
 
-  @Prop({ enum: UserType }) // adicionar required: true
+  @Prop({ enum: UserType, required: true })
   tipo_usuario: UserType;
 
   @Prop()
