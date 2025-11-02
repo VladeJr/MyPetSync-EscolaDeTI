@@ -9,6 +9,8 @@ import { Pet, PetDocument } from '../pets/schemas/pets.schema';
 import { Appointment, AppointmentDocument } from '../appointments/schemas/appointment.schema';
 import { Provider, ProviderDocument } from '../providers/schemas/provider.schema';
 
+
+
 @Injectable()
 export class ExamsService {
   constructor(
@@ -17,6 +19,7 @@ export class ExamsService {
     @InjectModel(Appointment.name) private readonly apptModel: Model<AppointmentDocument>,
     @InjectModel(Provider.name) private readonly providerModel: Model<ProviderDocument>,
   ) {}
+  
 
   private async assertPet(id: string | Types.ObjectId) {
     const ok = await this.petModel.exists({ _id: id as any });
@@ -143,4 +146,6 @@ export class ExamsService {
   async removeByAppointment(apptId: string | Types.ObjectId) {
     await this.model.deleteMany({ appointment: apptId as any });
   }
+
+  
 }

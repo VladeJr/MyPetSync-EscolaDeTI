@@ -4,7 +4,6 @@ import { PetsModule } from './pets/pets.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import config from './config/config';
-// import { JwtModule } from '@nestjs/jwt'; // JwtModule não é importado aqui
 import { TutorsModule } from './tutors/tutors.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProvidersModule } from './providers/providers.module';
@@ -15,6 +14,8 @@ import { MailModule } from './mail/mail.module';
 import { ExamsModule } from './exams/exams.module';
 import { FilesModule } from './files/files.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { RemindersModule } from './reminders/reminders.module';
 
 @Module({
   imports: [
@@ -42,6 +43,8 @@ import { ReviewsModule } from './reviews/reviews.module';
     ExamsModule,
     FilesModule,
     ReviewsModule,
+    NotificationsModule,
+    RemindersModule
   ],
   controllers: [],
   providers: [],
