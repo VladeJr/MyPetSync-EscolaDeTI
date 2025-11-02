@@ -13,11 +13,13 @@ import {
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { QueryProviderDto } from './dto/query-provider.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ProvidersService {
   constructor(
     @InjectModel(Provider.name) private readonly model: Model<ProviderDocument>,
+    private readonly usersService: UsersService,
   ) {}
 
   async createForUser(
@@ -25,6 +27,7 @@ export class ProvidersService {
     email: string,
     name: string,
     type: ProviderType,
+    service: string,
     cpf?: string,
     cnpj?: string,
   ) {
@@ -38,6 +41,7 @@ export class ProvidersService {
       name: name,
       email: email.toLowerCase(),
       type: type,
+      service: service,
       cpf: cpf,
       cnpj: cnpj,
     });
@@ -68,7 +72,7 @@ export class ProvidersService {
         $elemMatch: { $regex: q.service, $options: 'i' },
       };
     if (q.q) filter.name = { $regex: q.q, $options: 'i' };
-    if (q.type) filter.type = q.type; // filtro por tipo autonomo ou company
+    if (q.type) filter.type = q.type;
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
@@ -127,26 +131,66 @@ export class ProvidersService {
     return updated;
   }
 
-  // metodo para atualizar perfil do prestador pos signup -> add infos adicionais
   async updateMine(userId: string, dto: UpdateProviderDto) {
-    if (dto.email) {
-      const email = dto.email.toLowerCase();
-      const conflict = await this.model
-        .findOne({ userId: { $ne: userId }, email })
-        .lean();
-      if (conflict)
-        throw new ConflictException(
-          'O novo e-mail já está em uso por outro prestador.',
-        );
-      dto.email = email;
-    }
-    if (dto.state) dto.state = dto.state.toUpperCase();
+    const payload = { ...dto };
+    const userIdObj = new Types.ObjectId(userId);
 
-    const userId_ = new Types.ObjectId(userId);
+    if (payload.email || payload.name) {
+      const currentProvider = await this.model
+        .findOne({ userId: userIdObj })
+        .lean();
+      if (!currentProvider) {
+        throw new NotFoundException(
+          'Perfil de Prestador não encontrado para este usuário.',
+        );
+      }
+
+      const updatePayloadUser: { email?: string; nome?: string } = {};
+
+      if (payload.email && currentProvider.email !== payload.email) {
+        updatePayloadUser.email = payload.email.toLowerCase();
+
+        const conflict = await this.model
+          .findOne({
+            _id: { $ne: currentProvider._id },
+            email: updatePayloadUser.email,
+          })
+          .lean();
+        if (conflict)
+          throw new ConflictException(
+            'O novo e-mail já está em uso por outro prestador.',
+          );
+      }
+
+      if (payload.name && currentProvider.name !== payload.name) {
+        updatePayloadUser.nome = payload.name;
+      }
+
+      if (Object.keys(updatePayloadUser).length > 0) {
+        await this.usersService.updateUserProfile(userId, updatePayloadUser);
+
+        if (updatePayloadUser.email) {
+          payload.email = updatePayloadUser.email;
+        } else {
+          delete payload.email;
+        }
+
+        if (updatePayloadUser.nome) {
+          payload.name = updatePayloadUser.nome; 
+        } else {
+          delete payload.name;
+        }
+      } else {
+        delete payload.email;
+        delete payload.name;
+      }
+    }
+
+    if (payload.state) payload.state = payload.state.toUpperCase();
 
     const updated = await this.model.findOneAndUpdate(
-      { userId: userId_ },
-      { $set: dto },
+      { userId: userIdObj },
+      { $set: payload },
       { new: true, runValidators: true, lean: true },
     );
 
