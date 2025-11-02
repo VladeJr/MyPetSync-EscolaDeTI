@@ -42,7 +42,8 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
-    const { email, senha, nome, tipo_usuario, type, cpf, cnpj } = createUserDto;
+    const { email, senha, nome, tipo_usuario, type, cpf, cnpj, service } =
+      createUserDto; 
 
     const emailUnico = await this.UserModel.findOne({
       email: createUserDto.email,
@@ -72,6 +73,7 @@ export class AuthService {
         newUser.email,
         newUser.nome,
         type!,
+        service!,
         cpf,
         cnpj,
       );
@@ -108,14 +110,19 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId) {
-    const accessToken = this.jwtService.sign({ userId: userId.toString() });
+    const accessToken = this.jwtService.sign(
+      { userId: userId.toString() },
+      { expiresIn: '1d' },
+    );
     const refreshToken = uuidv4();
 
     await this.salvarRefreshToken(refreshToken, userId);
 
     return {
-      accessToken,
-      refreshToken,
+      token: accessToken,
+      user: {
+        id: userId,
+      },
     };
   }
 
