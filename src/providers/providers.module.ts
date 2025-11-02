@@ -1,18 +1,20 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ProvidersController } from './providers.controller';
-import { ProvidersService } from './providers.service';
 import { Provider, ProviderSchema } from './schemas/provider.schema';
-import { AppointmentsModule } from 'src/appointments/appointments.module';
-import { ServicesModule } from 'src/services/services.module';
+import { ProvidersService } from './providers.service';
+import { ProvidersController } from './providers.controller';
+import { UsersModule } from '../users/users.module';
+import { AppointmentsModule } from '../appointments/appointments.module';
+import { ServicesModule } from '../services/services.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Provider.name, schema: ProviderSchema },
     ]),
-    forwardRef(() => AppointmentsModule), // quebra de dependencia circular
-    forwardRef(() => ServicesModule),
+    UsersModule,
+    AppointmentsModule,
+    ServicesModule,
   ],
   controllers: [ProvidersController],
   providers: [ProvidersService],

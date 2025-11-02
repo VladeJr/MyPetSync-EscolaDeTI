@@ -43,7 +43,7 @@ export class AuthService {
 
   async signUp(createUserDto: CreateUserDto) {
     const { email, senha, nome, tipo_usuario, type, cpf, cnpj, service } =
-      createUserDto; // <-- ADICIONADO 'service'
+      createUserDto;
 
     const emailUnico = await this.UserModel.findOne({
       email: createUserDto.email,
@@ -73,7 +73,7 @@ export class AuthService {
         newUser.email,
         newUser.nome,
         type!,
-        service!, // <-- PASSANDO 'service' PARA O ProvidersService
+        service!,
         cpf,
         cnpj,
       );

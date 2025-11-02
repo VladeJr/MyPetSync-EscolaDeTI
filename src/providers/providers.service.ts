@@ -13,11 +13,13 @@ import {
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { QueryProviderDto } from './dto/query-provider.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ProvidersService {
   constructor(
     @InjectModel(Provider.name) private readonly model: Model<ProviderDocument>,
+    private readonly usersService: UsersService,
   ) {}
 
   async createForUser(
@@ -131,24 +133,64 @@ export class ProvidersService {
 
   async updateMine(userId: string, dto: UpdateProviderDto) {
     const payload = { ...dto };
+    const userIdObj = new Types.ObjectId(userId);
 
-    if (payload.email) {
-      payload.email = payload.email.toLowerCase();
-      const conflict = await this.model
-        .findOne({ userId: { $ne: userId }, email: payload.email })
+    if (payload.email || payload.name) {
+      const currentProvider = await this.model
+        .findOne({ userId: userIdObj })
         .lean();
-      if (conflict)
-        throw new ConflictException(
-          'O novo e-mail já está em uso por outro prestador.',
+      if (!currentProvider) {
+        throw new NotFoundException(
+          'Perfil de Prestador não encontrado para este usuário.',
         );
+      }
+
+      const updatePayloadUser: { email?: string; nome?: string } = {};
+
+      if (payload.email && currentProvider.email !== payload.email) {
+        updatePayloadUser.email = payload.email.toLowerCase();
+
+        const conflict = await this.model
+          .findOne({
+            _id: { $ne: currentProvider._id },
+            email: updatePayloadUser.email,
+          })
+          .lean();
+        if (conflict)
+          throw new ConflictException(
+            'O novo e-mail já está em uso por outro prestador.',
+          );
+      }
+
+      if (payload.name && currentProvider.name !== payload.name) {
+        updatePayloadUser.nome = payload.name;
+      }
+
+      if (Object.keys(updatePayloadUser).length > 0) {
+        await this.usersService.updateUserProfile(userId, updatePayloadUser);
+
+        // Atualiza o payload do Provider
+        if (updatePayloadUser.email) {
+          payload.email = updatePayloadUser.email;
+        } else {
+          delete payload.email;
+        }
+
+        if (updatePayloadUser.nome) {
+          payload.name = updatePayloadUser.nome;
+        } else {
+          delete payload.name;
+        }
+      } else {
+        delete payload.email;
+        delete payload.name;
+      }
     }
 
     if (payload.state) payload.state = payload.state.toUpperCase();
 
-    const userId_ = new Types.ObjectId(userId);
-
     const updated = await this.model.findOneAndUpdate(
-      { userId: userId_ },
+      { userId: userIdObj },
       { $set: payload },
       { new: true, runValidators: true, lean: true },
     );
