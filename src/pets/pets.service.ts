@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pet, PetDocument } from './schemas/pets.schema';
-import { Model, Types } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 
@@ -12,11 +12,27 @@ export class PetsService {
   async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
     const createdPet = new this.petModel({
       ...createPetDto,
-      tutorId: new Types.ObjectId(tutorId), // add tutorId
+      tutorId: new Types.ObjectId(tutorId),
     });
     return createdPet.save();
   }
-  // filtra todos os pets por tutor
+
+  async searchByName(tutorId: string | null, query: string): Promise<Pet[]> {
+    if (!query || query.length < 1) {
+      return [];
+    }
+
+    const regex = new RegExp(query, 'i');
+
+    const filter: FilterQuery<PetDocument> = { nome: { $regex: regex } };
+
+    if (tutorId) {
+      filter.tutorId = new Types.ObjectId(tutorId);
+    }
+
+    return this.petModel.find(filter).exec();
+  }
+
   async findAllByTutor(tutorId: string): Promise<Pet[]> {
     return this.petModel.find({ tutorId: new Types.ObjectId(tutorId) }).exec();
   }
@@ -35,7 +51,6 @@ export class PetsService {
     return pet;
   }
 
-  // método auxiliar para usar no TaskService, validação de segurança
   async getPetForTutor(tutorId: string, id: string): Promise<PetDocument> {
     const pet = await this.petModel
       .findOne({
@@ -51,7 +66,7 @@ export class PetsService {
   }
 
   async update(
-    tutorId: string, // garante que o pet pertence ao tutor antes de atualizar
+    tutorId: string,
     id: string,
     updatePetDto: UpdatePetDto,
   ): Promise<Pet> {
@@ -61,7 +76,7 @@ export class PetsService {
         tutorId: tutorId,
       },
       updatePetDto,
-      { new: true }, // retorna o documento atualizado
+      { new: true },
     );
     if (!updatedPet) {
       throw new NotFoundException(`Pet com id ${id} não encontrado.`);
