@@ -30,29 +30,27 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Retorna o perfil do usuário logado.' })
   @ApiOkResponse({
-    description:
-      'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
+    description: 'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
     type: User,
   })
-  async getMe(@CurrentUser() user: { userId: string }): Promise<User> {
+  async getMe(@CurrentUser() user: { userId: string }): Promise<{ nome: string }> { 
     const fullUser = await this.usersService.findByUserId(user.userId);
-
-    return fullUser as User;
+    
+    return {
+        nome: fullUser.nome,
+    };
   }
 
   @Put('me')
   @ApiOperation({
     summary:
-      'Atualiza o perfil do usuário logado (exclui o hash da senha no retorno).',
+      'Atualiza o perfil do usuário logado (exclui o hash da senha...',
   })
-  @ApiOkResponse({
-    description: 'Usuário atualizado com sucesso.',
-    type: User,
-  })
-  async updateUser(
+  async updateMe(
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.updateUser(user.userId, dto);
+    const updated = await this.usersService.updateUser(user.userId, dto);
+    return updated as User;
   }
 }
