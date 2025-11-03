@@ -37,13 +37,11 @@ export class UsersController {
   async getMe(@CurrentUser() user: { userId: string }): Promise<any> {
     const fullUser = await this.usersService.findByUserId(user.userId);
 
-    // Retorna todos os campos que o front-end usa no Header e AuthContext
     return {
       id: fullUser._id,
       nome: fullUser.nome,
       email: fullUser.email,
       telefone: fullUser.telefone,
-      // Inclua outros campos que seu front-end espera (como foto_perfil)
     };
   }
 
@@ -55,7 +53,6 @@ export class UsersController {
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,
   ): Promise<User> {
-    // Usamos updateUserProfile que contém a lógica de validação de e-mail e nome
     const updated = await this.usersService.updateUserProfile(user.userId, dto);
     return updated as User;
   }
