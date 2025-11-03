@@ -135,6 +135,19 @@ export class ProvidersService {
     const payload = { ...dto };
     const userIdObj = new Types.ObjectId(userId);
 
+    if (payload.email) {
+      payload.email = payload.email.toLowerCase();
+      const conflict = await this.model
+        .findOne({ userId: { $ne: userId }, email: payload.email })
+        .lean();
+      if (conflict)
+        throw new ConflictException(
+          'O novo e-mail já está em uso por outro prestador.',
+        );
+    }
+
+    if (payload.state) payload.state = payload.state.toUpperCase();
+
     if (payload.email || payload.name) {
       const currentProvider = await this.model
         .findOne({ userId: userIdObj })
@@ -169,7 +182,6 @@ export class ProvidersService {
       if (Object.keys(updatePayloadUser).length > 0) {
         await this.usersService.updateUserProfile(userId, updatePayloadUser);
 
-        // Atualiza o payload do Provider
         if (updatePayloadUser.email) {
           payload.email = updatePayloadUser.email;
         } else {
@@ -177,7 +189,7 @@ export class ProvidersService {
         }
 
         if (updatePayloadUser.nome) {
-          payload.name = updatePayloadUser.nome;
+          payload.name = updatePayloadUser.nome; 
         } else {
           delete payload.name;
         }
@@ -190,7 +202,7 @@ export class ProvidersService {
     if (payload.state) payload.state = payload.state.toUpperCase();
 
     const updated = await this.model.findOneAndUpdate(
-      { userId: userIdObj },
+      { userId: userIdObj }, 
       { $set: payload },
       { new: true, runValidators: true, lean: true },
     );
