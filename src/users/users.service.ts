@@ -23,6 +23,7 @@ export class UsersService {
   async updateUser(userId: string, dto: UpdateUserDto) {
     const userIdObj = new Types.ObjectId(userId);
     const payload: any = { ...dto };
+    const update: any = {};
 
     if (payload.email) {
       payload.email = payload.email.toLowerCase();
@@ -36,11 +37,17 @@ export class UsersService {
           'O novo e-mail já está em uso por outro usuário.',
         );
       }
+      update.email = payload.email;
     }
 
-    const update: any = {};
-    if (payload.nome) update.nome = payload.nome;
-    if (payload.email) update.email = payload.email;
+    // CORREÇÃO MÚLTIPLA: Mapeia 'name' (do DTO) para 'nome' (do Schema)
+    if (payload.name) {
+      update.nome = payload.name;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return;
+    }
 
     const updated = await this.model.findByIdAndUpdate(
       userIdObj,

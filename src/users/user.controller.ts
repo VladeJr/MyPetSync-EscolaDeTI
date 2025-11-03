@@ -3,7 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
-  Put,
+  Patch,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -30,27 +30,33 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Retorna o perfil do usuário logado.' })
   @ApiOkResponse({
-    description: 'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
+    description:
+      'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
     type: User,
   })
-  async getMe(@CurrentUser() user: { userId: string }): Promise<{ nome: string }> { 
+  async getMe(@CurrentUser() user: { userId: string }): Promise<any> {
     const fullUser = await this.usersService.findByUserId(user.userId);
-    
+
+    // Retorna todos os campos que o front-end usa no Header e AuthContext
     return {
-        nome: fullUser.nome,
+      id: fullUser._id,
+      nome: fullUser.nome,
+      email: fullUser.email,
+      telefone: fullUser.telefone,
+      // Inclua outros campos que seu front-end espera (como foto_perfil)
     };
   }
 
-  @Put('me')
+  @Patch('me')
   @ApiOperation({
-    summary:
-      'Atualiza o perfil do usuário logado (exclui o hash da senha...',
+    summary: 'Atualiza o perfil do usuário logado (exclui o hash da senha...',
   })
   async updateMe(
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,
   ): Promise<User> {
-    const updated = await this.usersService.updateUser(user.userId, dto);
+    // Usamos updateUserProfile que contém a lógica de validação de e-mail e nome
+    const updated = await this.usersService.updateUserProfile(user.userId, dto);
     return updated as User;
   }
 }
