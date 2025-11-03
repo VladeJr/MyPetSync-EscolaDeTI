@@ -40,7 +40,6 @@ export class UsersService {
       update.email = payload.email;
     }
 
-    // CORREÇÃO MÚLTIPLA: Mapeia 'name' (do DTO) para 'nome' (do Schema)
     if (payload.name) {
       update.nome = payload.name;
     }
