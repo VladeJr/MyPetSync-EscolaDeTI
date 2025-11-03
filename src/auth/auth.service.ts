@@ -73,7 +73,7 @@ export class AuthService {
         newUser.email,
         newUser.nome,
         type!,
-        service!,
+        service!, 
         cpf,
         cnpj,
       );

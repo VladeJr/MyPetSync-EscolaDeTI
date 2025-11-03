@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -51,12 +52,18 @@ export class ProvidersController {
   @ApiOkResponse({ description: 'Perfil atualizado com sucesso' })
   async updateMe(
     @CurrentUser() u: { userId: string },
-    @Body() dto: UpdateProviderDto,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false,
+        skipMissingProperties: true,
+      }),
+    )
+    dto: UpdateProviderDto,
   ) {
     return this.service.updateMine(u.userId, dto);
   }
 
-  // tratará do recurso autenticado - prestador logado
   @Get('/me/appointments')
   @ApiOperation({
     summary: 'Lista a agenda de consultas do Prestador logado (via JWT).',

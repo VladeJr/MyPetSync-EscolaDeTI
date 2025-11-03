@@ -17,9 +17,9 @@ export class AppointmentsService {
   constructor(
     @InjectModel(Appointment.name)
     private readonly model: Model<AppointmentDocument>,
-    @InjectModel(Pet.name) private readonly petModel: Model<PetDocument>,
+    @InjectModel(Pet.name) private readonly petModel: Model<Pet>,
     @InjectModel(Provider.name)
-    private readonly providerModel: Model<ProviderDocument>,
+    private readonly providerModel: Model<Provider>,
     private readonly providersService: ProvidersService,
   ) {}
 
@@ -60,6 +60,11 @@ export class AppointmentsService {
 
   async findAllByProviderUser(userId: string, q: QueryAppointmentDto) {
     const provider = await this.providersService.findOneByUserId(userId);
+
+    if (!provider) {
+      return { items: [], total: 0, page: 1, limit: q.limit || 20, pages: 1 };
+    }
+
     const providerId = (provider._id as Types.ObjectId).toString();
 
     return this.findAll({ ...q, provider: providerId });
@@ -69,8 +74,15 @@ export class AppointmentsService {
     const filter: FilterQuery<AppointmentDocument> = {};
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
     if (q.pet) filter.pet = new Types.ObjectId(q.pet);
+
     if (q.status) {
-      const statusArray = q.status.split(',');
+      const statusValue = q.status;
+      const statusArray = Array.isArray(statusValue)
+        ? statusValue
+        : typeof statusValue === 'string'
+          ? statusValue.split(',')
+          : [statusValue];
+
       filter.status = { $in: statusArray };
     }
     if (q.q) {

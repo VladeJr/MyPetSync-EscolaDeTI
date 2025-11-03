@@ -14,8 +14,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
     super({
       jwtFromRequest: passportJwt.ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false, //usa a variável de ambiente plana
-      secretOrKey: configService.get<string>('JWT_SECRET')!,
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET!,
     });
   }
 
