@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
@@ -38,6 +39,13 @@ export class PetsController {
     @Body() createPetDto: CreatePetDto,
   ): Promise<Pet> {
     return this.petsService.create(user.userId, createPetDto);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Busca pets por nome para agendamento.' })
+  @ApiOkResponse({ description: 'Retorna a lista de pets encontrados.' })
+  async search(@Query('q') query: string): Promise<Pet[]> {
+    return this.petsService.searchByName(null, query);
   }
 
   @Get()
