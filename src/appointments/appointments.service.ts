@@ -12,6 +12,20 @@ import {
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 
+const petPopulationConfig = {
+  path: 'pet',
+  select: 'nome tutorId species',
+  populate: {
+    path: 'tutorId',
+    select: 'name _id',
+  },
+};
+
+const providerPopulationConfig = {
+  path: 'provider',
+  select: 'name email city state whatsapp',
+};
+
 @Injectable()
 export class AppointmentsService {
   constructor(
@@ -122,8 +136,8 @@ export class AppointmentsService {
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate('pet', 'name species')
-        .populate('provider', 'name email city state')
+        .populate(petPopulationConfig)
+        .populate(providerPopulationConfig)
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -136,8 +150,8 @@ export class AppointmentsService {
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate('pet', 'name species owner')
-      .populate('provider', 'name email city state whatsapp')
+      .populate(petPopulationConfig)
+      .populate(providerPopulationConfig)
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
     return found;
