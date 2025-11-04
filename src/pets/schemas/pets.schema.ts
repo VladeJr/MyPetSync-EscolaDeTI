@@ -12,10 +12,10 @@ export enum PetGender {
   MALE = 'Macho',
   FEMALE = 'Fêmea',
 }
-// adicionar o enum de raças, contendo todas as raças de cão e gato
+
 @Schema()
 export class Pet extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Tutor', required: true })
   tutorId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
