@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 const AppointmentStatus = ['scheduled', 'completed', 'canceled', 'confirmed'];
 
@@ -27,6 +28,9 @@ export class QueryAppointmentDto {
     isArray: true,
   })
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',') : value,
+  )
   @IsEnum(AppointmentStatus, { each: true })
   status?: string | string[];
 
