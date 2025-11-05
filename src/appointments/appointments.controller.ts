@@ -18,6 +18,7 @@ import { QueryAppointmentDto } from './dto/query-appointment.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
 import { TutorsService } from '../tutors/tutors.service';
+import { Types } from 'mongoose';
 
 @ApiTags('appointments')
 @ApiBearerAuth()
@@ -33,20 +34,24 @@ export class AppointmentsController {
     private readonly tutorsService: TutorsService,
   ) {}
 
-  @Get('stats/today/:providerId')
+  @Get('stats/today')
   @ApiOkResponse({
     description: 'Contagem de agendamentos para hoje (total e confirmados)',
   })
-  countAppointmentsForToday(@Param('providerId') providerId: string) {
-    return this.service.countAppointmentsForToday(providerId);
+  async countAppointmentsForToday(@CurrentUser() user: { userId: string }) {
+    const provider = await this.service.getProviderByUser(user.userId);
+    return this.service.countAppointmentsForToday(
+      (provider._id as Types.ObjectId).toString(),
+    );
   }
 
-  @Get('stats/clients/:providerId')
+  @Get('stats/clients')
   @ApiOkResponse({
     description: 'Contagem total de clientes (tutores) no sistema',
   })
-  countAllTutors(@Param('providerId') providerId: string) {
-    return this.tutorsService.countAll();
+  async countAllTutors() {
+    const count = await this.tutorsService.countAll();
+    return { totalClients: count };
   }
 
   @Post()
