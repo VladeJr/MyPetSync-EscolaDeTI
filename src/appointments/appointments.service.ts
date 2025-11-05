@@ -147,6 +147,36 @@ export class AppointmentsService {
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
+
+  async countAppointmentsForToday(
+    providerId: string,
+  ): Promise<{ total: number; confirmed: number }> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const providerObjId = new Types.ObjectId(providerId);
+
+    const baseFilter: FilterQuery<AppointmentDocument> = {
+      provider: providerObjId,
+      dateTime: { $gte: startOfToday, $lte: endOfToday },
+      status: { $in: ['scheduled', 'confirmed'] },
+    };
+
+    const total = await this.model.countDocuments(baseFilter);
+
+    const confirmedFilter: FilterQuery<AppointmentDocument> = {
+      ...baseFilter,
+      status: 'confirmed',
+    };
+
+    const confirmed = await this.model.countDocuments(confirmedFilter);
+
+    return { total, confirmed };
+  }
+
   async findOne(id: string) {
     const found = await this.model
       .findById(id)

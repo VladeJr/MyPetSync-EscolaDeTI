@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
@@ -11,6 +15,10 @@ export class TutorsService {
     @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
   ) {}
 
+  async countAll(): Promise<number> {
+    return this.model.countDocuments({});
+  }
+
   async createForUser(userId: string, name: string, dto: CreateTutorDto) {
     return this.model.create({
       ...dto,
@@ -20,10 +28,13 @@ export class TutorsService {
   }
 
   async getByUserId(userId: string) {
-    return this.model.findOne({ userId }).lean();
+    const tutor = await this.model
+      .findOne({ userId: new Types.ObjectId(userId) })
+      .lean();
+    return tutor;
   }
 
-  async getById(id: string) {
+  async findById(id: string) {
     const tutor = await this.model.findById(id).lean();
     if (!tutor) throw new NotFoundException('Tutor não encontrado');
     return tutor;
@@ -31,14 +42,19 @@ export class TutorsService {
 
   async updateMine(userId: string, dto: UpdateTutorDto) {
     const updated = await this.model
-      .findOneAndUpdate({ userId }, dto, { new: true, upsert: false })
+      .findOneAndUpdate({ userId: new Types.ObjectId(userId) }, dto, {
+        new: true,
+        upsert: false,
+      })
       .lean();
     if (!updated) throw new NotFoundException('Tutor não encontrado');
     return updated;
   }
 
   async removeMine(userId: string) {
-    const res = await this.model.deleteOne({ userId });
+    const res = await this.model.deleteOne({
+      userId: new Types.ObjectId(userId),
+    });
     if (res.deletedCount === 0)
       throw new NotFoundException('Tutor não encontrado');
     return { ok: true };

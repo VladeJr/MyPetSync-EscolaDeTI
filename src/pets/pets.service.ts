@@ -4,15 +4,26 @@ import { Pet, PetDocument } from './schemas/pets.schema';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
+import { TutorsService } from '../tutors/tutors.service';
 
 @Injectable()
 export class PetsService {
-  constructor(@InjectModel(Pet.name) private petModel: Model<PetDocument>) {}
+  constructor(
+    @InjectModel(Pet.name) private petModel: Model<PetDocument>,
+    private readonly tutorsService: TutorsService,
+  ) {}
 
   async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
+    const tutor = await this.tutorsService.getByUserId(tutorId);
+    if (!tutor) {
+      throw new NotFoundException(
+        'Tutor não encontrado. Certifique-se de que o usuário tem um perfil de Tutor.',
+      );
+    }
+
     const createdPet = new this.petModel({
       ...createPetDto,
-      tutorId: new Types.ObjectId(tutorId),
+      tutorId: new Types.ObjectId(tutor._id),
     });
     return createdPet.save();
   }

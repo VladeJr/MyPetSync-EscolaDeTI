@@ -1,66 +1,81 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
+  Query,
   UseGuards,
-  Param,
-  NotFoundException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { TutorsService } from './tutors.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
-import { CurrentUser } from '../shared/current-user.decorator';
-import { UsersService } from 'src/users/users.service';
+import { CurrentUser } from 'src/shared/current-user.decorator';
 
 @ApiTags('tutors')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('tutors')
 export class TutorsController {
-  constructor(
-    private readonly tutors: TutorsService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly tutorsService: TutorsService) {}
 
-  @Post('me')
-  async createMe(
-    @CurrentUser() u: { userId: string },
+  @Post()
+  @ApiOperation({ summary: 'Cria um novo perfil de tutor' })
+  async create(
+    @CurrentUser() user: { userId: string; name: string },
     @Body() dto: CreateTutorDto,
   ) {
-    const user = await this.usersService.findByUserId(u.userId);
-    if (!user) {
-      throw new NotFoundException(`Usuário autenticado não encontrado`);
-    }
-
-    return this.tutors.createForUser(u.userId, user.nome, dto);
+    return this.tutorsService.createForUser(user.userId, user.name, dto);
   }
 
-  @Get('me')
-  async getMe(@CurrentUser() u: { userId: string }) {
-    return this.tutors.getByUserId(u.userId);
+  @Get('mine')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Retorna o perfil do tutor logado' })
+  @ApiOkResponse({ description: 'Retorna o perfil do tutor.' })
+  async getMine(@CurrentUser() user: { userId: string }) {
+    return this.tutorsService.getByUserId(user.userId);
   }
 
-  @Put('me')
-  async updateMe(
-    @CurrentUser() u: { userId: string },
+  @Put('mine')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Atualiza o perfil do tutor logado' })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
+  async updateMine(
+    @CurrentUser() user: { userId: string },
     @Body() dto: UpdateTutorDto,
   ) {
-    return this.tutors.updateMine(u.userId, dto);
+    return this.tutorsService.updateMine(user.userId, dto);
   }
 
-  @Delete('me')
-  async removeMe(@CurrentUser() u: { userId: string }) {
-    return this.tutors.removeMine(u.userId);
+  @Delete('mine')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove o perfil do tutor logado' })
+  @ApiOkResponse({ description: 'Perfil removido com sucesso.' })
+  async removeMine(@CurrentUser() user: { userId: string }) {
+    return this.tutorsService.removeMine(user.userId);
   }
 
-  // rota para buscar tutor por id (útil para admin ou perfil público)
+  @Get()
+  @ApiOperation({ summary: 'Lista todos os tutores (apenas para Admin)' })
+  @ApiOkResponse({ description: 'Retorna a lista de tutores.' })
+  async listAll(@Query('limit') limit: number, @Query('page') page: number) {
+    return this.tutorsService.listAll(limit, page);
+  }
+
   @Get(':id')
-  async findById(@Param('id') id: string) {
-    return this.tutors.getById(id);
+  @ApiOperation({ summary: 'Busca um tutor por ID' })
+  @ApiOkResponse({ description: 'Retorna o tutor encontrado.' })
+  async getTutorById(@Param('id') id: string) {
+    return this.tutorsService.findById(id);
   }
 }
