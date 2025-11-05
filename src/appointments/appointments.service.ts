@@ -147,8 +147,10 @@ export class AppointmentsService {
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
-  
-  async countAppointmentsForToday(providerId: string): Promise<{ total: number; confirmed: number }> {
+
+  async countAppointmentsForToday(
+    providerId: string,
+  ): Promise<{ total: number; confirmed: number }> {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 

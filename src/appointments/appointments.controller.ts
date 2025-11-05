@@ -33,16 +33,19 @@ export class AppointmentsController {
     private readonly tutorsService: TutorsService,
   ) {}
 
-  @Get('stats/today')
-  @ApiOkResponse({ description: 'Contagem de agendamentos para hoje (total e confirmados)' })
-  countAppointmentsForToday(@CurrentUser() user: { userId: string }) {
-    return this.service.findAllByProviderUser(user.userId, {} as QueryAppointmentDto)
-      .then(res => this.service.countAppointmentsForToday(res.items[0].provider.toString()));
+  @Get('stats/today/:providerId')
+  @ApiOkResponse({
+    description: 'Contagem de agendamentos para hoje (total e confirmados)',
+  })
+  countAppointmentsForToday(@Param('providerId') providerId: string) {
+    return this.service.countAppointmentsForToday(providerId);
   }
-  
-  @Get('stats/clients')
-  @ApiOkResponse({ description: 'Contagem total de clientes (tutores) no sistema' })
-  countAllTutors() {
+
+  @Get('stats/clients/:providerId')
+  @ApiOkResponse({
+    description: 'Contagem total de clientes (tutores) no sistema',
+  })
+  countAllTutors(@Param('providerId') providerId: string) {
     return this.tutorsService.countAll();
   }
 
