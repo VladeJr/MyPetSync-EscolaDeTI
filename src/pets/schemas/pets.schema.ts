@@ -12,7 +12,6 @@ export enum PetGender {
   MALE = 'Macho',
   FEMALE = 'Fêmea',
 }
-
 @Schema()
 export class Pet extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Tutor', required: true })

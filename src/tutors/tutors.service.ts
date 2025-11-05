@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
@@ -10,6 +10,10 @@ export class TutorsService {
   constructor(
     @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
   ) {}
+
+  async countAll(): Promise<number> {
+    return this.model.countDocuments({});
+  }
 
   async createForUser(userId: string, name: string, dto: CreateTutorDto) {
     return this.model.create({

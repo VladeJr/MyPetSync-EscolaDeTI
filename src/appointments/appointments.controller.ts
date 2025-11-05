@@ -17,6 +17,7 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
+import { TutorsService } from '../tutors/tutors.service';
 
 @ApiTags('appointments')
 @ApiBearerAuth()
@@ -27,7 +28,23 @@ import { CurrentUser } from 'src/shared/current-user.decorator';
   'providers/:providerId/appointments',
 ])
 export class AppointmentsController {
-  constructor(private readonly service: AppointmentsService) {}
+  constructor(
+    private readonly service: AppointmentsService,
+    private readonly tutorsService: TutorsService,
+  ) {}
+
+  @Get('stats/today')
+  @ApiOkResponse({ description: 'Contagem de agendamentos para hoje (total e confirmados)' })
+  countAppointmentsForToday(@CurrentUser() user: { userId: string }) {
+    return this.service.findAllByProviderUser(user.userId, {} as QueryAppointmentDto)
+      .then(res => this.service.countAppointmentsForToday(res.items[0].provider.toString()));
+  }
+  
+  @Get('stats/clients')
+  @ApiOkResponse({ description: 'Contagem total de clientes (tutores) no sistema' })
+  countAllTutors() {
+    return this.tutorsService.countAll();
+  }
 
   @Post()
   @ApiOkResponse({ description: 'Consulta criada' })
@@ -37,7 +54,6 @@ export class AppointmentsController {
     @Param('providerId') providerId?: string,
   ) {
     const { pet, provider, ...rest } = dto as any;
-    // rota aninhada de Pet: usa petId do path
     if (petId) {
       if (!dto.provider) {
         throw new BadRequestException(
@@ -49,7 +65,6 @@ export class AppointmentsController {
         'pet'
       >);
     }
-    // rota aninhada de Provider: usa providerId do path
     if (providerId) {
       if (!dto.pet) {
         throw new BadRequestException(
@@ -61,7 +76,6 @@ export class AppointmentsController {
         ...rest,
       } as Omit<CreateAppointmentDto, 'provider'>);
     }
-    // (/appointments): ambos devem estar no body
     if (!dto.pet || !dto.provider) {
       throw new BadRequestException(
         'Na rota global, tanto o ID do pet quanto o ID do prestador são obrigatórios.',
@@ -87,7 +101,6 @@ export class AppointmentsController {
       });
     }
 
-    // Se a rota for /appointments, filtra pelo usuário logado.
     return this.service.findAllByProviderUser(user.userId, q);
   }
 

@@ -10,6 +10,39 @@ import { QueryReviewDto } from './dto/query-review.dto';
 export class ReviewsService {
   constructor(@InjectModel(Review.name) private readonly model: Model<ReviewDocument>) {}
 
+  async getAverageRatingByProvider(providerId: string): Promise<{ average: number; count: number }> {
+    const providerObjId = new Types.ObjectId(providerId);
+
+    const result = await this.model.aggregate([
+      { $match: { provider: providerObjId } },
+      {
+        $group: {
+          _id: null,
+          average: { $avg: '$rating' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    if (result.length === 0) {
+      return { average: 0.0, count: 0 };
+    }
+
+    const { average, count } = result[0];
+    return { average: parseFloat(average.toFixed(1)), count };
+  }
+
+  async findRecentByProvider(providerId: string, limit = 5) {
+    const providerObjId = new Types.ObjectId(providerId);
+
+    return this.model
+      .find({ provider: providerObjId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('author', 'name')
+      .lean();
+  }
+
   async create(authorId: string, dto: CreateReviewDto) {
     const data: any = {
       ...dto,

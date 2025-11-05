@@ -13,6 +13,18 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 export class ReviewsController {
   constructor(private readonly service: ReviewsService) {}
 
+  @Get('stats/average/:providerId')
+  @ApiOkResponse({ description: 'Retorna a avaliação média e contagem de avaliações' })
+  getAverageRatingByProvider(@Param('providerId') providerId: string) {
+    return this.service.getAverageRatingByProvider(providerId);
+  }
+
+  @Get('recent/:providerId')
+  @ApiOkResponse({ description: 'Lista as últimas avaliações para o dashboard' })
+  findRecentByProvider(@Param('providerId') providerId: string) {
+    return this.service.findRecentByProvider(providerId);
+  }
+
   @Post()
   @ApiOkResponse({ description: 'Avaliação criada' })
   create(@Body() dto: CreateReviewDto, @Req() req: any) {
