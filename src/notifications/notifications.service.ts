@@ -1,10 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as admin from 'firebase-admin';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { NotificationToken, NotificationTokenDocument } from './schemas/notification-token.schema';
 import { SendNotificationDto } from './dto/send-notification.dto';
-import * as path from 'path';
 
 @Injectable()
 export class NotificationsService {
@@ -14,13 +12,13 @@ export class NotificationsService {
     @InjectModel(NotificationToken.name)
     private readonly tokenModel: Model<NotificationTokenDocument>,
   ) {
-    // Inicializa o Firebase Admin (só uma vez)
-    const serviceAccountPath = path.resolve('config/firebase-service-account.json');
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccountPath),
-      });
-    }
+    // Firebase desativado temporariamente para não quebrar
+    // const serviceAccountPath = path.resolve('config/firebase-service-account.json');
+    // if (!admin.apps.length) {
+    //   admin.initializeApp({
+    //     credential: admin.credential.cert(serviceAccountPath),
+    //   });
+    // }
   }
 
   /** Salva ou atualiza o token de notificação do usuário */
@@ -32,7 +30,7 @@ export class NotificationsService {
     );
   }
 
-  /** Envia notificação para lista de tokens ou todos os tokens de um usuário */
+  /** Envia notificação (stub sem Firebase) */
   async send(dto: SendNotificationDto, userId?: string) {
     let tokens = dto.tokens || [];
 
@@ -46,15 +44,10 @@ export class NotificationsService {
       return { success: false, message: 'Nenhum token válido.' };
     }
 
-    const payload: admin.messaging.MulticastMessage = {
-      notification: { title: dto.title, body: dto.body },
-      data: dto.data ? Object.fromEntries(Object.entries(dto.data).map(([k, v]) => [k, String(v)])) : {},
-      tokens,
-    };
-
-    const result = await admin.messaging().sendEachForMulticast(payload);
-    this.logger.log(`Notificações enviadas: ${result.successCount}/${tokens.length}`);
-    return result;
+    // Apenas log para simular envio
+    this.logger.log(`Simulando envio de notificação para ${tokens.length} token(s).`);
+    this.logger.log(`Título: ${dto.title}, Corpo: ${dto.body}`);
+    return { success: true, message: 'Simulação de envio realizada.' };
   }
 
   /** Remove token inválido ou não usado */
