@@ -41,7 +41,10 @@ export class PetsService {
       filter.tutorId = new Types.ObjectId(tutorId);
     }
 
-    return this.petModel.find(filter).exec();
+    return this.petModel
+      .find(filter)
+      .populate({ path: 'tutorId', select: 'name' })
+      .exec();
   }
 
   async findAllByTutor(tutorId: string): Promise<Pet[]> {
