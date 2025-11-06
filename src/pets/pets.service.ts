@@ -96,14 +96,17 @@ export class PetsService {
     return updatedPet;
   }
 
-  async delete(tutorId: string, id: string): Promise<void> {
-    const deletedPet = await this.petModel.findByIdAndDelete({
-      _id: id,
-      tutorId: tutorId,
+  async delete(userId: string, petId: string) {
+    const pet = await this.petModel.findOne({
+      _id: new Types.ObjectId(petId),
+      tutorId: new Types.ObjectId(userId),
     });
 
-    if (!deletedPet) {
-      throw new NotFoundException(`Pet com id ${id} não encontrado.`);
+    if (!pet) {
+      throw new NotFoundException('Pet não encontrado ou não pertence a este usuário');
     }
+
+    await this.petModel.deleteOne({ _id: pet._id });
+    return { message: 'Pet removido com sucesso' };
   }
 }
