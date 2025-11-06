@@ -4,7 +4,7 @@ import { Types, Document } from 'mongoose';
 export type PetDocument = Pet & Document;
 
 export enum PetSpecies {
-  DOG = 'Cão',
+  DOG = 'Cachorro',
   CAT = 'Gato',
 }
 
