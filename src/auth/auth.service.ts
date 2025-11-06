@@ -42,7 +42,7 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
-    const { email, senha, nome, tipo_usuario, type, cpf, cnpj, service } =
+    const { email, senha, nome, tipo_usuario, type, cpf, cnpj, service, telefone } =
       createUserDto;
 
     const emailUnico = await this.UserModel.findOne({
@@ -57,6 +57,7 @@ export class AuthService {
     const newUser = await this.UserModel.create({
       nome: nome,
       email: email.toLowerCase(),
+      telefone: telefone,
       senha_hash: senhaHashed,
       tipo_usuario: tipo_usuario,
     });
