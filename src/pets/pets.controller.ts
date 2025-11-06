@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
@@ -28,7 +29,7 @@ import { CurrentUser } from 'src/shared/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 @Controller('pets')
 export class PetsController {
-  constructor(private readonly petsService: PetsService) {}
+  constructor(private readonly petsService: PetsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Cria um novo pet para o user autenticado' })
@@ -38,6 +39,13 @@ export class PetsController {
     @Body() createPetDto: CreatePetDto,
   ): Promise<Pet> {
     return this.petsService.create(user.userId, createPetDto);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Busca pets por nome para agendamento.' })
+  @ApiOkResponse({ description: 'Retorna a lista de pets encontrados.' })
+  async search(@Query('q') query: string): Promise<Pet[]> {
+    return this.petsService.searchByName(null, query);
   }
 
   @Get()
@@ -78,7 +86,9 @@ export class PetsController {
   async delete(
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
-  ): Promise<void> {
-    return await this.petsService.delete(user.userId, id);
+  ) {
+    await this.petsService.delete(user.userId, id);
+    return { message: 'Pet removido com sucesso' };
   }
+
 }
