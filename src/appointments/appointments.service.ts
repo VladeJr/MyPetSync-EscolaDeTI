@@ -46,7 +46,6 @@ export class AppointmentsService {
     if (!ok) throw new NotFoundException('Prestador não encontrado.');
   }
 
-  // MÉTODO SIMPLIFICADO: Confia que ProvidersService retorna objeto puro
   async getProviderByUser(userId: string) {
     const provider = await this.providersService.findOneByUserId(userId);
     if (!provider) {
