@@ -99,14 +99,12 @@ export class ProvidersService {
 
   async findOneByUserId(userId: string) {
     const userIdObj = new Types.ObjectId(userId);
-
-    // USANDO .lean() para garantir um objeto JS puro (sem Buffers complexos)
-    const found = await this.model.findOne({ userId: userIdObj }).lean().exec();
+    const found = await this.model.findOne({ userId: userIdObj }).lean();
     if (!found) {
       throw new NotFoundException(`Perfil de prestador não encontrado.`);
     }
 
-    return found; // Retorna objeto JS puro (com _id como string se getters estiverem setados)
+    return found;
   }
 
   async update(id: string, dto: UpdateProviderDto) {
