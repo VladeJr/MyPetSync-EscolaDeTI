@@ -28,6 +28,7 @@ import { QueryServiceDto } from 'src/services/dto/query-service.dto';
 import { ServicesService } from 'src/services/services.service';
 import { CreateServiceDto } from 'src/services/dto/create-service.dto';
 import { Types } from 'mongoose';
+import { UsersService } from 'src/users/users.service';
 
 @ApiTags('providers')
 @ApiBearerAuth('access-token')
@@ -38,6 +39,7 @@ export class ProvidersController {
     private readonly service: ProvidersService,
     private readonly appointmentsService: AppointmentsService,
     private readonly servicesService: ServicesService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get('me')
@@ -105,10 +107,29 @@ export class ProvidersController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Cria novo Prestador de Serviço' })
-  @ApiOkResponse({ description: 'Prestador criado' })
-  async create(@Body() dto: CreateProviderDto) {
-    return this.service.create(dto);
+  @ApiOperation({ summary: 'Cria novo Prestador de Serviço (Completa Perfil)' })
+  @ApiOkResponse({ description: 'Prestador criado com sucesso' })
+  async create(
+    @CurrentUser() u: { userId: string },
+    @Body() dto: CreateProviderDto,
+  ) {
+    const user = await this.usersService.findByUserId(u.userId);
+
+    const firstService = dto.servicesOffered?.length
+      ? dto.servicesOffered[0]
+      : '';
+    const cpf = (dto as any).cpf;
+    const cnpj = (dto as any).cnpj;
+
+    return this.service.createForUser(
+      u.userId,
+      user.email,
+      user.nome,
+      dto.type,
+      firstService,
+      cpf,
+      cnpj,
+    );
   }
 
   @Get()

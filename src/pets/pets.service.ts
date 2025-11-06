@@ -12,18 +12,23 @@ export class PetsService {
     @InjectModel(Pet.name) private petModel: Model<PetDocument>,
     private readonly tutorsService: TutorsService,
   ) {}
-
-  async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
-    const tutor = await this.tutorsService.getByUserId(tutorId);
+   
+  private async _getTutorDocumentId(userId: string): Promise<string> {
+    const tutor = await this.tutorsService.getByUserId(userId);
     if (!tutor) {
       throw new NotFoundException(
         'Tutor não encontrado. Certifique-se de que o usuário tem um perfil de Tutor.',
       );
     }
+    return tutor._id.toString(); 
+  }
+
+  async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
+    const tutorDocumentId = await this._getTutorDocumentId(tutorId);
 
     const createdPet = new this.petModel({
       ...createPetDto,
-      tutorId: new Types.ObjectId(tutor._id),
+      tutorId: new Types.ObjectId(tutorDocumentId),
     });
     return createdPet.save();
   }
@@ -38,7 +43,12 @@ export class PetsService {
     const filter: FilterQuery<PetDocument> = { nome: { $regex: regex } };
 
     if (tutorId) {
-      filter.tutorId = new Types.ObjectId(tutorId);
+      try {
+        const tutorDocumentId = await this._getTutorDocumentId(tutorId);
+        filter.tutorId = new Types.ObjectId(tutorDocumentId);
+      } catch (e) {
+        return [];
+      }
     }
 
     return this.petModel
@@ -48,16 +58,21 @@ export class PetsService {
   }
 
   async findAllByTutor(tutorId: string): Promise<Pet[]> {
-    return this.petModel.find({ tutorId: new Types.ObjectId(tutorId) }).exec();
+    const tutorDocumentId = await this._getTutorDocumentId(tutorId);
+    return this.petModel
+      .find({ tutorId: new Types.ObjectId(tutorDocumentId) })
+      .exec();
   }
 
   async findById(tutorId: string, id: string): Promise<Pet> {
+    const tutorDocumentId = await this._getTutorDocumentId(tutorId);
     const pet = await this.petModel
       .findOne({
         _id: id,
-        tutorId: new Types.ObjectId(tutorId),
+        tutorId: new Types.ObjectId(tutorDocumentId),
       })
       .exec();
+
     if (!pet) {
       throw new NotFoundException(`Pet com id ${id} não encontrado.`);
     }
@@ -66,10 +81,11 @@ export class PetsService {
   }
 
   async getPetForTutor(tutorId: string, id: string): Promise<PetDocument> {
+    const tutorDocumentId = await this._getTutorDocumentId(tutorId);
     const pet = await this.petModel
       .findOne({
         _id: new Types.ObjectId(id),
-        tutorId: new Types.ObjectId(tutorId),
+        tutorId: new Types.ObjectId(tutorDocumentId), 
       })
       .exec();
 
@@ -84,29 +100,34 @@ export class PetsService {
     id: string,
     updatePetDto: UpdatePetDto,
   ): Promise<Pet> {
-    const updatedPet = await this.petModel.findByIdAndUpdate(
+    const tutorDocumentId = await this._getTutorDocumentId(tutorId);
+
+    const updatedPet = await this.petModel.findOneAndUpdate(
       {
-        _id: id,
-        tutorId: tutorId,
+        _id: new Types.ObjectId(id),
+        tutorId: new Types.ObjectId(tutorDocumentId),
       },
       updatePetDto,
       { new: true },
     );
+
     if (!updatedPet) {
-      throw new NotFoundException(`Pet com id ${id} não encontrado.`);
+      throw new NotFoundException(`Pet com id ${id} não encontrado ou não pertence a este tutor.`);
     }
 
     return updatedPet;
   }
 
-  async delete(tutorId: string, id: string): Promise<void> {
-    const deletedPet = await this.petModel.findByIdAndDelete({
-      _id: id,
-      tutorId: tutorId,
-    });
+  async delete(userId: string, petId: string): Promise<{ message: string }> {
+    const tutorDocumentId = await this._getTutorDocumentId(userId);
+    const result = await this.petModel.deleteOne({
+      _id: new Types.ObjectId(petId),
+      tutorId: new Types.ObjectId(tutorDocumentId), 
+    }).exec();
 
-    if (!deletedPet) {
-      throw new NotFoundException(`Pet com id ${id} não encontrado.`);
+    if (result.deletedCount === 0) {
+      throw new NotFoundException('Pet não encontrado ou não pertence a este tutor.');
     }
+    return { message: 'Pet removido com sucesso' };
   }
 }

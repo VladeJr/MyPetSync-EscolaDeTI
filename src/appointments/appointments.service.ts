@@ -46,6 +46,17 @@ export class AppointmentsService {
     if (!ok) throw new NotFoundException('Prestador não encontrado.');
   }
 
+  async getProviderByUser(userId: string) {
+    const provider = await this.providersService.findOneByUserId(userId);
+    if (!provider) {
+      throw new NotFoundException(
+        'Perfil de Prestador não encontrado para o usuário logado.',
+      );
+    }
+    // Retorna o objeto já limpo pelo ProvidersService
+    return provider;
+  }
+
   async create(dto: CreateAppointmentDto) {
     await this.assertPet(dto.pet);
     await this.assertProvider(dto.provider);

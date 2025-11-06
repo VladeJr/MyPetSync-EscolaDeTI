@@ -99,7 +99,6 @@ export class ProvidersService {
 
   async findOneByUserId(userId: string) {
     const userIdObj = new Types.ObjectId(userId);
-
     const found = await this.model.findOne({ userId: userIdObj }).lean();
     if (!found) {
       throw new NotFoundException(`Perfil de prestador não encontrado.`);
@@ -189,7 +188,7 @@ export class ProvidersService {
         }
 
         if (updatePayloadUser.nome) {
-          payload.name = updatePayloadUser.nome; 
+          payload.name = updatePayloadUser.nome;
         } else {
           delete payload.name;
         }
@@ -202,7 +201,7 @@ export class ProvidersService {
     if (payload.state) payload.state = payload.state.toUpperCase();
 
     const updated = await this.model.findOneAndUpdate(
-      { userId: userIdObj }, 
+      { userId: userIdObj },
       { $set: payload },
       { new: true, runValidators: true, lean: true },
     );

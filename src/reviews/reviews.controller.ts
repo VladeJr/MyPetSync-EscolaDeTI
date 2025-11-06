@@ -1,28 +1,63 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { QueryReviewDto } from './dto/query-review.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { ProvidersService } from '../providers/providers.service';
+import { CurrentUser } from 'src/shared/current-user.decorator';
+import { Types } from 'mongoose'; // Adicionado para corrigir o erro de tipagem
 
 @ApiTags('reviews')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly service: ReviewsService) {}
+  constructor(
+    private readonly service: ReviewsService,
+    private readonly providersService: ProvidersService,
+  ) {}
 
-  @Get('stats/average/:providerId')
-  @ApiOkResponse({ description: 'Retorna a avaliação média e contagem de avaliações' })
-  getAverageRatingByProvider(@Param('providerId') providerId: string) {
-    return this.service.getAverageRatingByProvider(providerId);
+  @Get('stats/average')
+  @ApiOkResponse({
+    description:
+      'Retorna a avaliação média e contagem de avaliações para o Provider logado',
+  })
+  async getAverageRatingByProvider(@CurrentUser() user: { userId: string }) {
+    const provider = await this.providersService.findOneByUserId(user.userId);
+    if (!provider) return { average: 0.0, count: 0 };
+
+    // CORREÇÃO: Type assertion para resolver TS18046
+    return this.service.getAverageRatingByProvider(
+      (provider._id as Types.ObjectId).toString(),
+    );
   }
 
-  @Get('recent/:providerId')
-  @ApiOkResponse({ description: 'Lista as últimas avaliações para o dashboard' })
-  findRecentByProvider(@Param('providerId') providerId: string) {
-    return this.service.findRecentByProvider(providerId);
+  @Get('recent')
+  @ApiOkResponse({
+    description:
+      'Lista as últimas avaliações para o dashboard do Provider logado',
+  })
+  async findRecentByProvider(@CurrentUser() user: { userId: string }) {
+    const provider = await this.providersService.findOneByUserId(user.userId);
+    if (!provider) return [];
+
+    // CORREÇÃO: Type assertion para resolver TS18046
+    return this.service.findRecentByProvider(
+      (provider._id as Types.ObjectId).toString(),
+    );
   }
 
   @Post()
@@ -45,7 +80,11 @@ export class ReviewsController {
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Avaliação atualizada' })
-  update(@Param('id') id: string, @Body() dto: UpdateReviewDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateReviewDto,
+    @Req() req: any,
+  ) {
     return this.service.update(id, req.user.userId, dto);
   }
 
