@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { NotificationToken, NotificationTokenDocument } from './schemas/notification-token.schema';
+import {
+  NotificationToken,
+  NotificationTokenDocument,
+} from './schemas/notification-token.schema';
 import { SendNotificationDto } from './dto/send-notification.dto';
 
 @Injectable()
@@ -45,7 +48,9 @@ export class NotificationsService {
     }
 
     // Apenas log para simular envio
-    this.logger.log(`Simulando envio de notificação para ${tokens.length} token(s).`);
+    this.logger.log(
+      `Simulando envio de notificação para ${tokens.length} token(s).`,
+    );
     this.logger.log(`Título: ${dto.title}, Corpo: ${dto.body}`);
     return { success: true, message: 'Simulação de envio realizada.' };
   }

@@ -3,7 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
-  Put,
+  Patch,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -30,27 +30,30 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Retorna o perfil do usuário logado.' })
   @ApiOkResponse({
-    description: 'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
+    description:
+      'Retorna o objeto User, com campos sensíveis omitidos por segurança.',
     type: User,
   })
-  async getMe(@CurrentUser() user: { userId: string }): Promise<{ nome: string }> { 
+  async getMe(@CurrentUser() user: { userId: string }): Promise<any> {
     const fullUser = await this.usersService.findByUserId(user.userId);
-    
+
     return {
-        nome: fullUser.nome,
+      id: fullUser._id,
+      nome: fullUser.nome,
+      email: fullUser.email,
+      telefone: fullUser.telefone,
     };
   }
 
-  @Put('me')
+  @Patch('me')
   @ApiOperation({
-    summary:
-      'Atualiza o perfil do usuário logado (exclui o hash da senha...',
+    summary: 'Atualiza o perfil do usuário logado (exclui o hash da senha...',
   })
   async updateMe(
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,
   ): Promise<User> {
-    const updated = await this.usersService.updateUser(user.userId, dto);
+    const updated = await this.usersService.updateUserProfile(user.userId, dto);
     return updated as User;
   }
 }

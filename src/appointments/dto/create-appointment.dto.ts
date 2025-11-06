@@ -52,12 +52,12 @@ export class CreateAppointmentDto {
   price?: number;
 
   @ApiPropertyOptional({
-    enum: ['scheduled', 'completed', 'canceled'],
+    enum: ['scheduled', 'completed', 'canceled', 'confirmed'],
     example: 'scheduled',
   })
   @IsOptional()
-  @IsEnum(['scheduled', 'completed', 'canceled'])
-  status?: 'scheduled' | 'completed' | 'canceled';
+  @IsEnum(['scheduled', 'completed', 'canceled', 'confirmed'])
+  status?: 'scheduled' | 'completed' | 'canceled' | 'confirmed';
 
   @ApiPropertyOptional({ example: 'Ayres recomenda retorno em 30 dias' })
   @IsOptional()

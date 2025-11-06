@@ -5,7 +5,9 @@ import { AppointmentsService } from './appointments.service';
 import { Appointment, AppointmentSchema } from './schemas/appointment.schema';
 import { Pet, PetSchema } from '../pets/schemas/pets.schema';
 import { Provider, ProviderSchema } from '../providers/schemas/provider.schema';
+import { Tutor, TutorSchema } from '../tutors/schemas/tutor.schema';
 import { ProvidersModule } from 'src/providers/providers.module';
+import { TutorsModule } from 'src/tutors/tutors.module';
 
 @Module({
   imports: [
@@ -13,8 +15,10 @@ import { ProvidersModule } from 'src/providers/providers.module';
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Pet.name, schema: PetSchema },
       { name: Provider.name, schema: ProviderSchema },
+      { name: Tutor.name, schema: TutorSchema },
     ]),
-    forwardRef(() => ProvidersModule), // quebra o ciclo de dependência entre providers e appointments
+    forwardRef(() => ProvidersModule),
+    TutorsModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],

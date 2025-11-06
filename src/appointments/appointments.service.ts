@@ -12,6 +12,20 @@ import {
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 
+const petPopulationConfig = {
+  path: 'pet',
+  select: 'nome tutorId species',
+  populate: {
+    path: 'tutorId',
+    select: 'name _id',
+  },
+};
+
+const providerPopulationConfig = {
+  path: 'provider',
+  select: 'name email city state whatsapp',
+};
+
 @Injectable()
 export class AppointmentsService {
   constructor(
@@ -30,6 +44,17 @@ export class AppointmentsService {
   private async assertProvider(id: string | Types.ObjectId) {
     const ok = await this.providerModel.exists({ _id: id });
     if (!ok) throw new NotFoundException('Prestador não encontrado.');
+  }
+
+  async getProviderByUser(userId: string) {
+    const provider = await this.providersService.findOneByUserId(userId);
+    if (!provider) {
+      throw new NotFoundException(
+        'Perfil de Prestador não encontrado para o usuário logado.',
+      );
+    }
+    // Retorna o objeto já limpo pelo ProvidersService
+    return provider;
   }
 
   async create(dto: CreateAppointmentDto) {
@@ -122,8 +147,8 @@ export class AppointmentsService {
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate('pet', 'name species')
-        .populate('provider', 'name email city state')
+        .populate(petPopulationConfig)
+        .populate(providerPopulationConfig)
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -133,11 +158,41 @@ export class AppointmentsService {
 
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
+
+  async countAppointmentsForToday(
+    providerId: string,
+  ): Promise<{ total: number; confirmed: number }> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const providerObjId = new Types.ObjectId(providerId);
+
+    const baseFilter: FilterQuery<AppointmentDocument> = {
+      provider: providerObjId,
+      dateTime: { $gte: startOfToday, $lte: endOfToday },
+      status: { $in: ['scheduled', 'confirmed'] },
+    };
+
+    const total = await this.model.countDocuments(baseFilter);
+
+    const confirmedFilter: FilterQuery<AppointmentDocument> = {
+      ...baseFilter,
+      status: 'confirmed',
+    };
+
+    const confirmed = await this.model.countDocuments(confirmedFilter);
+
+    return { total, confirmed };
+  }
+
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate('pet', 'name species owner')
-      .populate('provider', 'name email city state whatsapp')
+      .populate(petPopulationConfig)
+      .populate(providerPopulationConfig)
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
     return found;

@@ -11,7 +11,7 @@ export class PetsService {
   constructor(
     @InjectModel(Pet.name) private petModel: Model<PetDocument>,
     private readonly tutorsService: TutorsService,
-  ) { }
+  ) {}
 
   async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
     const tutor = await this.tutorsService.getByUserId(tutorId);
