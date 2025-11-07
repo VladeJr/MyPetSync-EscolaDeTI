@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types, SortOrder } from 'mongoose';
 import { Review, ReviewDocument } from './schemas/review.schema';
@@ -8,9 +12,13 @@ import { QueryReviewDto } from './dto/query-review.dto';
 
 @Injectable()
 export class ReviewsService {
-  constructor(@InjectModel(Review.name) private readonly model: Model<ReviewDocument>) {}
+  constructor(
+    @InjectModel(Review.name) private readonly model: Model<ReviewDocument>,
+  ) {}
 
-  async getAverageRatingByProvider(providerId: string): Promise<{ average: number; count: number }> {
+  async getAverageRatingByProvider(
+    providerId: string,
+  ): Promise<{ average: number; count: number }> {
     const providerObjId = new Types.ObjectId(providerId);
 
     const result = await this.model.aggregate([
@@ -51,6 +59,12 @@ export class ReviewsService {
     if (!dto.provider && !dto.service) {
       throw new NotFoundException('É necessário informar provider ou service.');
     }
+    if (dto.provider) {
+      data.provider = new Types.ObjectId(dto.provider);
+    }
+    if (dto.service) {
+      data.service = new Types.ObjectId(dto.service);
+    }
     const created = await this.model.create(data);
     return created.toObject();
   }
@@ -63,7 +77,9 @@ export class ReviewsService {
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '10', 10), 1), 100);
     const skip = (page - 1) * limit;
-    const sort: { [key: string]: SortOrder } = { createdAt: q.order === 'asc' ? 1 : -1 };
+    const sort: { [key: string]: SortOrder } = {
+      createdAt: q.order === 'asc' ? 1 : -1,
+    };
 
     const [items, total] = await Promise.all([
       this.model
@@ -80,7 +96,8 @@ export class ReviewsService {
   }
 
   async findOne(id: string) {
-    const found = await this.model.findById(id)
+    const found = await this.model
+      .findById(id)
       .populate('author', 'name email')
       .populate('provider', 'name city state')
       .populate('service', 'name price')
@@ -93,7 +110,9 @@ export class ReviewsService {
     const review = await this.model.findById(id);
     if (!review) throw new NotFoundException('Avaliação não encontrada.');
     if (review.author.toString() !== authorId) {
-      throw new ForbiddenException('Você só pode editar suas próprias avaliações.');
+      throw new ForbiddenException(
+        'Você só pode editar suas próprias avaliações.',
+      );
     }
     Object.assign(review, dto);
     await review.save();
@@ -104,7 +123,9 @@ export class ReviewsService {
     const review = await this.model.findById(id);
     if (!review) throw new NotFoundException('Avaliação não encontrada.');
     if (review.author.toString() !== authorId) {
-      throw new ForbiddenException('Você só pode excluir suas próprias avaliações.');
+      throw new ForbiddenException(
+        'Você só pode excluir suas próprias avaliações.',
+      );
     }
     await review.deleteOne();
     return { success: true };
