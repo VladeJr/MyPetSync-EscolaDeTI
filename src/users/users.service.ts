@@ -12,7 +12,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly model: Model<UserDocument>,
-  ) {}
+  ) { }
 
   async findByUserId(userId: string) {
     const found = await this.model.findById(new Types.ObjectId(userId)).lean();
@@ -63,22 +63,15 @@ export class UsersService {
 
   async updateUserProfile(
     userId: string,
-    data: { nome?: string; email?: string },
+    data: { nome?: string; email?: string; telefone?: string },
   ) {
     const userIdObj = new Types.ObjectId(userId);
     const update: any = {};
 
     if (data.email) {
       const emailLower = data.email.toLowerCase();
-      const conflict = await this.model
-        .findOne({ _id: { $ne: userIdObj }, email: emailLower })
-        .lean();
-
-      if (conflict) {
-        throw new ConflictException(
-          'O novo e-mail já está em uso por outro usuário.',
-        );
-      }
+      const conflict = await this.model.findOne({ _id: { $ne: userIdObj }, email: emailLower }).lean();
+      if (conflict) throw new ConflictException('O novo e-mail já está em uso.');
       update.email = emailLower;
     }
 
@@ -86,9 +79,11 @@ export class UsersService {
       update.nome = data.nome;
     }
 
-    if (Object.keys(update).length === 0) {
-      return;
+    if (data.telefone) {
+      update.telefone = data.telefone;
     }
+
+    if (Object.keys(update).length === 0) return;
 
     const updated = await this.model.findByIdAndUpdate(
       userIdObj,
@@ -96,10 +91,7 @@ export class UsersService {
       { new: true, runValidators: true, lean: true },
     );
 
-    if (!updated) {
-      throw new NotFoundException('Usuário não encontrado.');
-    }
-
+    if (!updated) throw new NotFoundException('Usuário não encontrado.');
     return updated;
   }
 }
