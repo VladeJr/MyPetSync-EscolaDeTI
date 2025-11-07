@@ -162,36 +162,44 @@ export class AppointmentsService {
     providerId: string,
   ): Promise<{ total: number; confirmed: number }> {
     const now = new Date();
-    const startOfTodayLocal = new Date(
+
+    const startOfToday = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
     );
 
-    const startOfToday = startOfTodayLocal;
-    const startOfTomorrowLocal = new Date(
+    const endOfToday = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate() + 1,
     );
 
-    const endOfToday = startOfTomorrowLocal;
     const providerObjId = new Types.ObjectId(providerId);
-    const baseFilter: FilterQuery<AppointmentDocument> = {
-      provider: providerObjId,
+
+    const dateFilter = {
       dateTime: {
         $gte: startOfToday,
         $lt: endOfToday,
       },
-      status: { $in: ['scheduled', 'confirmed'] },
     };
 
-    const total = await this.model.countDocuments(baseFilter);
+    const totalFilter: FilterQuery<AppointmentDocument> = {
+      provider: providerObjId,
+      ...dateFilter,
+      status: { $nin: ['cancelled', 'completed'] },
+    };
+
     const confirmedFilter: FilterQuery<AppointmentDocument> = {
-      ...baseFilter,
+      provider: providerObjId,
+      ...dateFilter,
       status: 'confirmed',
     };
-    const confirmed = await this.model.countDocuments(confirmedFilter);
+
+    const [total, confirmed] = await Promise.all([
+      this.model.countDocuments(totalFilter),
+      this.model.countDocuments(confirmedFilter),
+    ]);
 
     return { total, confirmed };
   }
