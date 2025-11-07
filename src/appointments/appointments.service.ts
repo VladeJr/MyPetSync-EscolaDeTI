@@ -53,7 +53,6 @@ export class AppointmentsService {
         'Perfil de Prestador não encontrado para o usuário logado.',
       );
     }
-    // Retorna o objeto já limpo pelo ProvidersService
     return provider;
   }
 
@@ -162,28 +161,45 @@ export class AppointmentsService {
   async countAppointmentsForToday(
     providerId: string,
   ): Promise<{ total: number; confirmed: number }> {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const now = new Date();
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    const endOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
 
     const providerObjId = new Types.ObjectId(providerId);
 
-    const baseFilter: FilterQuery<AppointmentDocument> = {
-      provider: providerObjId,
-      dateTime: { $gte: startOfToday, $lte: endOfToday },
-      status: { $in: ['scheduled', 'confirmed'] },
+    const dateFilter = {
+      dateTime: {
+        $gte: startOfToday,
+        $lt: endOfToday,
+      },
     };
 
-    const total = await this.model.countDocuments(baseFilter);
+    const totalFilter: FilterQuery<AppointmentDocument> = {
+      provider: providerObjId,
+      ...dateFilter,
+      status: { $nin: ['cancelled', 'completed'] },
+    };
 
     const confirmedFilter: FilterQuery<AppointmentDocument> = {
-      ...baseFilter,
+      provider: providerObjId,
+      ...dateFilter,
       status: 'confirmed',
     };
 
-    const confirmed = await this.model.countDocuments(confirmedFilter);
+    const [total, confirmed] = await Promise.all([
+      this.model.countDocuments(totalFilter),
+      this.model.countDocuments(confirmedFilter),
+    ]);
 
     return { total, confirmed };
   }
