@@ -18,7 +18,7 @@ import { QueryReviewDto } from './dto/query-review.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { ProvidersService } from '../providers/providers.service';
 import { CurrentUser } from 'src/shared/current-user.decorator';
-import { Types } from 'mongoose'; // Adicionado para corrigir o erro de tipagem
+import { Types } from 'mongoose';
 
 @ApiTags('reviews')
 @ApiBearerAuth()
@@ -39,7 +39,6 @@ export class ReviewsController {
     const provider = await this.providersService.findOneByUserId(user.userId);
     if (!provider) return { average: 0.0, count: 0 };
 
-    // CORREÇÃO: Type assertion para resolver TS18046
     return this.service.getAverageRatingByProvider(
       (provider._id as Types.ObjectId).toString(),
     );
@@ -54,7 +53,6 @@ export class ReviewsController {
     const provider = await this.providersService.findOneByUserId(user.userId);
     if (!provider) return [];
 
-    // CORREÇÃO: Type assertion para resolver TS18046
     return this.service.findRecentByProvider(
       (provider._id as Types.ObjectId).toString(),
     );
