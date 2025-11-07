@@ -6,7 +6,7 @@ export type ReviewDocument = Review & Document;
 @Schema({ timestamps: true, collection: 'reviews' })
 export class Review {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  author: Types.ObjectId;  // quem avaliou (usuário autenticado)
+  author: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Provider', required: false, index: true })
   provider?: Types.ObjectId;
