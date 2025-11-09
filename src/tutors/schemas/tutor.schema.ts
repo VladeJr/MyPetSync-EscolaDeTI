@@ -3,7 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type TutorDocument = HydratedDocument<Tutor>;
 
-@Schema({ _id: false })
+@Schema({ })
 class Address {
   @Prop({ required: true })
   label: string;

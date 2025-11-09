@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
@@ -59,12 +55,72 @@ export class TutorsService {
       throw new NotFoundException('Tutor não encontrado');
     return { ok: true };
   }
-
-  async listAll(limit = 50, page = 1) {
+  
+   async listAll(limit = 50, page = 1) {
     return this.model
       .find()
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
+  }
+
+  async listAddresses(userId: string) {
+    const tutor = await this.model
+      .findOne({ userId: new Types.ObjectId(userId) })
+      .lean();
+    if (!tutor) throw new NotFoundException('Tutor não encontrado');
+    return tutor.addresses;
+  }
+
+  async addAddress(userId: string, addressDto: any) {
+    const tutor = await this.model.findOne({
+      userId: new Types.ObjectId(userId),
+    });
+    if (!tutor) throw new NotFoundException('Tutor não encontrado');
+
+    tutor.addresses.push(addressDto);
+    await tutor.save();
+
+    return tutor.addresses;
+  }
+
+  async deleteAddress(userId: string, addressId: string) {
+    const userIdObj = new Types.ObjectId(userId);
+
+    const result = await this.model.updateOne(
+      { userId: userIdObj },
+      {
+        $pull: {
+          addresses: { _id: addressId },
+        },
+      },
+    );
+
+    if (result.matchedCount === 0) {
+      throw new NotFoundException('Tutor não encontrado');
+    }
+    return { message: 'Endereço removido com sucesso' };
+  }
+
+  async updateAddress(userId: string, addressId: string, addressDto: any) {
+    const tutor = await this.model.findOne({
+      userId: new Types.ObjectId(userId),
+    });
+    if (!tutor) throw new NotFoundException('Tutor não encontrado');
+
+    const addresses = tutor.addresses as any;
+    const addressIndex = addresses.findIndex(
+      (addr: any) => addr._id.toString() === addressId,
+    );
+
+    if (addressIndex === -1) {
+      throw new NotFoundException('Endereço não encontrado');
+    }
+
+    addresses[addressIndex] = { ...addresses[addressIndex].toObject(), ...addressDto };
+    
+    await tutor.save();
+
+    return { message: 'Endereço atualizado com sucesso', address: addresses[addressIndex] };
   }
 }
