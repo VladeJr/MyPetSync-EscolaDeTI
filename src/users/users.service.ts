@@ -1,7 +1,7 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -14,8 +14,8 @@ export class UsersService {
     @InjectModel(User.name) private readonly model: Model<UserDocument>,
   ) {}
 
-  async findByUserId(userId: string) {
-    const found = await this.model.findById(new Types.ObjectId(userId)).lean();
+  async findByUserId(userId: string): Promise<UserDocument> {
+    const found = await this.model.findById(new Types.ObjectId(userId));
     if (!found) throw new NotFoundException('Usuário não encontrado.');
     return found;
   }
@@ -45,13 +45,13 @@ export class UsersService {
     }
 
     if (Object.keys(update).length === 0) {
-      return;
+      return this.findByUserId(userId);
     }
 
     const updated = await this.model.findByIdAndUpdate(
       userIdObj,
       { $set: update },
-      { new: true, runValidators: true, lean: true },
+      { new: true, runValidators: true },
     );
 
     if (!updated) {
@@ -87,13 +87,13 @@ export class UsersService {
     }
 
     if (Object.keys(update).length === 0) {
-      return;
+      return this.findByUserId(userId);
     }
 
     const updated = await this.model.findByIdAndUpdate(
       userIdObj,
       { $set: update },
-      { new: true, runValidators: true, lean: true },
+      { new: true, runValidators: true },
     );
 
     if (!updated) {

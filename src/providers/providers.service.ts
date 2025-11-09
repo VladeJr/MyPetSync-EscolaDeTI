@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
@@ -36,8 +37,15 @@ export class ProvidersService {
       throw new ConflictException('Perfil de prestador já existe.');
     }
 
+    let userIdObj: Types.ObjectId;
+    try {
+      userIdObj = new Types.ObjectId(userId);
+    } catch (e) {
+      throw new BadRequestException('ID de Usuário inválido.');
+    }
+
     const created = await this.model.create({
-      userId: new Types.ObjectId(userId),
+      userId: userIdObj,
       name: name,
       email: email.toLowerCase(),
       type: type,
@@ -98,8 +106,19 @@ export class ProvidersService {
   }
 
   async findOneByUserId(userId: string) {
-    const userIdObj = new Types.ObjectId(userId);
-    const found = await this.model.findOne({ userId: userIdObj }).lean();
+    let userIdObj: Types.ObjectId;
+    try {
+      userIdObj = new Types.ObjectId(userId);
+    } catch (e) {
+      throw new BadRequestException('ID de Usuário inválido.');
+    }
+
+    let found = await this.model.findOne({ userId: userIdObj }).lean();
+
+    if (!found) {
+      found = await this.model.findOne({ userId: userId }).lean();
+    }
+
     if (!found) {
       throw new NotFoundException(`Perfil de prestador não encontrado.`);
     }
@@ -132,12 +151,17 @@ export class ProvidersService {
 
   async updateMine(userId: string, dto: UpdateProviderDto) {
     const payload = { ...dto };
-    const userIdObj = new Types.ObjectId(userId);
+    let userIdObj: Types.ObjectId;
+    try {
+      userIdObj = new Types.ObjectId(userId);
+    } catch (e) {
+      throw new BadRequestException('ID de Usuário inválido.');
+    }
 
     if (payload.email) {
       payload.email = payload.email.toLowerCase();
       const conflict = await this.model
-        .findOne({ userId: { $ne: userId }, email: payload.email })
+        .findOne({ userId: { $ne: userIdObj }, email: payload.email })
         .lean();
       if (conflict)
         throw new ConflictException(
