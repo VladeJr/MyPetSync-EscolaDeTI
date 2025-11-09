@@ -5,7 +5,6 @@ import {
   IsString,
   IsEmail,
   MaxLength,
-  MinLength,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -21,4 +20,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsEmail()
   @MaxLength(160)
   email?: string;
+
+  @ApiPropertyOptional({ example: '11999998888' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  telefone?: string
 }
