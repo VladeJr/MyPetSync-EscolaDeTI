@@ -24,7 +24,7 @@ import { CurrentUser } from 'src/shared/current-user.decorator';
 @ApiTags('tutors')
 @Controller('tutors')
 export class TutorsController {
-  constructor(private readonly tutorsService: TutorsService) {}
+  constructor(private readonly tutorsService: TutorsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Cria um novo perfil de tutor' })
@@ -65,7 +65,7 @@ export class TutorsController {
     return this.tutorsService.removeMine(user.userId);
   }
 
-  @Get()
+ @Get()
   @ApiOperation({ summary: 'Lista todos os tutores (apenas para Admin)' })
   @ApiOkResponse({ description: 'Retorna a lista de tutores.' })
   async listAll(@Query('limit') limit: number, @Query('page') page: number) {
@@ -73,9 +73,51 @@ export class TutorsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Busca um tutor por ID' })
-  @ApiOkResponse({ description: 'Retorna o tutor encontrado.' })
+  @ApiOperation({ summary: 'Retorna um tutor pelo ID (apenas para Admin)' })
+  @ApiOkResponse({ description: 'Retorna um tutor específico.' })
   async getTutorById(@Param('id') id: string) {
     return this.tutorsService.findById(id);
+  }
+
+  @Get('mine/addresses')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Lista todos os endereços do tutor logado' })
+  async listAddresses(@CurrentUser() user: { userId: string }) {
+    return this.tutorsService.listAddresses(user.userId);
+  }
+
+  @Post('mine/addresses')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Adiciona um novo endereço ao tutor logado' })
+  async addAddress(
+    @CurrentUser() user: { userId: string },
+    @Body() addressDto: any,
+  ) {
+    return this.tutorsService.addAddress(user.userId, addressDto);
+  }
+
+  @Delete('mine/addresses/:addressId')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove um endereço do tutor logado' })
+  async deleteAddress(
+    @CurrentUser() user: { userId: string },
+    @Param('addressId') addressId: string,
+  ) {
+    return this.tutorsService.deleteAddress(user.userId, addressId);
+  }
+
+  @Put('mine/addresses/:addressId')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Atualiza um endereço do tutor logado' })
+  async updateAddress(
+    @CurrentUser() user: { userId: string },
+    @Param('addressId') addressId: string,
+    @Body() addressDto: any,
+  ) {
+    return this.tutorsService.updateAddress(user.userId, addressId, addressDto);
   }
 }
