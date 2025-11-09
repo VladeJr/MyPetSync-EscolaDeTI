@@ -63,7 +63,7 @@ export class UsersService {
 
   async updateUserProfile(
     userId: string,
-    data: { nome?: string; email?: string },
+    data: { nome?: string; email?: string; telefone?: string },
   ) {
     const userIdObj = new Types.ObjectId(userId);
     const update: any = {};
@@ -73,17 +73,17 @@ export class UsersService {
       const conflict = await this.model
         .findOne({ _id: { $ne: userIdObj }, email: emailLower })
         .lean();
-
-      if (conflict) {
-        throw new ConflictException(
-          'O novo e-mail já está em uso por outro usuário.',
-        );
-      }
+      if (conflict)
+        throw new ConflictException('O novo e-mail já está em uso.');
       update.email = emailLower;
     }
 
     if (data.nome) {
       update.nome = data.nome;
+    }
+
+    if (data.telefone) {
+      update.telefone = data.telefone;
     }
 
     if (Object.keys(update).length === 0) {
@@ -96,10 +96,7 @@ export class UsersService {
       { new: true, runValidators: true },
     );
 
-    if (!updated) {
-      throw new NotFoundException('Usuário não encontrado.');
-    }
-
+    if (!updated) throw new NotFoundException('Usuário não encontrado.');
     return updated;
   }
 }
