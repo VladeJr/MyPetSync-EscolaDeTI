@@ -15,9 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
-import { User } from './schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Types } from 'mongoose';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -36,9 +37,12 @@ export class UsersController {
   })
   async getMe(@CurrentUser() user: { userId: string }): Promise<any> {
     const fullUser = await this.usersService.findByUserId(user.userId);
+    const userIdString = (
+      fullUser as UserDocument & { _id: Types.ObjectId }
+    )._id.toHexString();
 
     return {
-      id: fullUser._id,
+      id: userIdString,
       nome: fullUser.nome,
       email: fullUser.email,
       telefone: fullUser.telefone,
