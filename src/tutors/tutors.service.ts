@@ -4,12 +4,13 @@ import { Model, Types } from 'mongoose';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
 @Injectable()
 export class TutorsService {
   constructor(
     @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
-  ) {}
+  ) { }
 
   async countAll(): Promise<number> {
     return this.model.countDocuments({});
@@ -55,8 +56,8 @@ export class TutorsService {
       throw new NotFoundException('Tutor não encontrado');
     return { ok: true };
   }
-  
-   async listAll(limit = 50, page = 1) {
+
+  async listAll(limit = 50, page = 1) {
     return this.model
       .find()
       .skip((page - 1) * limit)
@@ -102,23 +103,20 @@ export class TutorsService {
     return { message: 'Endereço removido com sucesso' };
   }
 
-  async updateAddress(userId: string, addressId: string, addressDto: any) {
+  async updateAddress(userId: string, addressId: string, addressDto: UpdateAddressDto) {
     const tutor = await this.model.findOne({
       userId: new Types.ObjectId(userId),
     });
     if (!tutor) throw new NotFoundException('Tutor não encontrado');
-
     const addresses = tutor.addresses as any;
     const addressIndex = addresses.findIndex(
       (addr: any) => addr._id.toString() === addressId,
     );
-
     if (addressIndex === -1) {
       throw new NotFoundException('Endereço não encontrado');
     }
-
-    addresses[addressIndex] = { ...addresses[addressIndex].toObject(), ...addressDto };
     
+    addresses[addressIndex] = { ...addresses[addressIndex].toObject(), ...addressDto };
     await tutor.save();
 
     return { message: 'Endereço atualizado com sucesso', address: addresses[addressIndex] };
