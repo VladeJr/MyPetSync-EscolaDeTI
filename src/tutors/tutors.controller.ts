@@ -20,6 +20,7 @@ import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/shared/current-user.decorator';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
 @ApiTags('tutors')
 @Controller('tutors')
@@ -116,7 +117,7 @@ export class TutorsController {
   async updateAddress(
     @CurrentUser() user: { userId: string },
     @Param('addressId') addressId: string,
-    @Body() addressDto: any,
+    @Body() addressDto: UpdateAddressDto,
   ) {
     return this.tutorsService.updateAddress(user.userId, addressId, addressDto);
   }
