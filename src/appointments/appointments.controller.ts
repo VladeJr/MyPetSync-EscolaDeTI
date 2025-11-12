@@ -89,7 +89,6 @@ export class AppointmentsController {
         'Na rota global, tanto o ID do pet quanto o ID do prestador são obrigatórios.',
       );
     }
-
     return this.service.create(dto);
   }
 
@@ -101,6 +100,9 @@ export class AppointmentsController {
     @Param('petId') petId?: string,
     @Param('providerId') providerId?: string,
   ) {
+    if (q.tutorId) {
+      return this.service.findAllByTutorId(q.tutorId, q);
+    }
     if (petId || providerId) {
       return this.service.findAll({
         ...q,

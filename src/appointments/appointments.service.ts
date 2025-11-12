@@ -11,6 +11,7 @@ import {
   ProviderDocument,
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
+import { PetsService } from '../pets/pets.service';
 
 const petPopulationConfig = {
   path: 'pet',
@@ -35,6 +36,7 @@ export class AppointmentsService {
     @InjectModel(Provider.name)
     private readonly providerModel: Model<Provider>,
     private readonly providersService: ProvidersService,
+    private readonly petsService: PetsService,
   ) {}
 
   private async assertPet(id: string | Types.ObjectId) {
@@ -94,11 +96,35 @@ export class AppointmentsService {
     return this.findAll({ ...q, provider: providerId });
   }
 
+  async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) {
+    const pets = await this.petsService.findAllByTutor(tutorId);
+
+    if (pets.length === 0) {
+      return {
+        items: [],
+        total: 0,
+        page: q.page || 1,
+        limit: q.limit || 20,
+        pages: 0,
+      };
+    }
+
+    const petIds = pets.map((pet: any) => pet._id.toString());
+    const petQuery: QueryAppointmentDto = {
+      ...q,
+      pet: petIds as unknown as string,
+    };
+
+    return this.findAll(petQuery);
+  }
+
   async findAll(q: QueryAppointmentDto) {
     const filter: FilterQuery<AppointmentDocument> = {};
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
-    if (q.pet) filter.pet = new Types.ObjectId(q.pet);
-
+    if (q.pet) {
+      const petIds = Array.isArray(q.pet) ? q.pet : [q.pet];
+      filter.pet = { $in: petIds.map((id) => new Types.ObjectId(id)) };
+    }
     if (q.status) {
       const statusValue = q.status;
       const statusArray = Array.isArray(statusValue)
@@ -116,13 +142,14 @@ export class AppointmentsService {
         { notes: { $regex: q.q, $options: 'i' } },
       ];
     }
-    const dateFromValue = q.dateFrom || q.from;
+
     const dateToValue = q.to;
-    if (dateFromValue || dateToValue) {
+    if (q.from || dateToValue) {
       filter.dateTime = {};
       if (q.from) (filter.dateTime as any).$gte = new Date(q.from);
       if (q.to) (filter.dateTime as any).$lte = new Date(q.to);
     }
+
     if (q.minPrice || q.maxPrice) {
       filter.price = {};
       if (q.minPrice) filter.price.$gte = Number(q.minPrice);
