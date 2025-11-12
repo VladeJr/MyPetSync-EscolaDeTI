@@ -10,7 +10,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 export class TutorsService {
   constructor(
     @InjectModel(Tutor.name) private readonly model: Model<TutorDocument>,
-  ) { }
+  ) {}
 
   async countAll(): Promise<number> {
     return this.model.countDocuments({});
@@ -103,7 +103,11 @@ export class TutorsService {
     return { message: 'Endereço removido com sucesso' };
   }
 
-  async updateAddress(userId: string, addressId: string, addressDto: UpdateAddressDto) {
+  async updateAddress(
+    userId: string,
+    addressId: string,
+    addressDto: UpdateAddressDto,
+  ) {
     const tutor = await this.model.findOne({
       userId: new Types.ObjectId(userId),
     });
@@ -115,10 +119,16 @@ export class TutorsService {
     if (addressIndex === -1) {
       throw new NotFoundException('Endereço não encontrado');
     }
-    
-    addresses[addressIndex] = { ...addresses[addressIndex].toObject(), ...addressDto };
+
+    addresses[addressIndex] = {
+      ...addresses[addressIndex].toObject(),
+      ...addressDto,
+    };
     await tutor.save();
 
-    return { message: 'Endereço atualizado com sucesso', address: addresses[addressIndex] };
+    return {
+      message: 'Endereço atualizado com sucesso',
+      address: addresses[addressIndex],
+    };
   }
 }

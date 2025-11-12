@@ -42,8 +42,17 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
-    const { email, senha, nome, tipo_usuario, type, cpf, cnpj, service, telefone } =
-      createUserDto;
+    const {
+      email,
+      senha,
+      nome,
+      tipo_usuario,
+      type,
+      cpf,
+      cnpj,
+      service,
+      telefone,
+    } = createUserDto;
 
     const emailUnico = await this.UserModel.findOne({
       email: createUserDto.email,
@@ -80,7 +89,10 @@ export class AuthService {
       );
     }
 
-    return this.generateUserToken(newUser._id as Types.ObjectId);
+    return this.generateUserToken(
+      newUser._id as Types.ObjectId,
+      newUser.tipo_usuario,
+    );
   }
 
   async login(loginDto: LoginDto) {
@@ -94,7 +106,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    return this.generateUserToken(user._id as Types.ObjectId);
+    return this.generateUserToken(
+      user._id as Types.ObjectId,
+      user.tipo_usuario,
+    );
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto) {
@@ -107,10 +122,16 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token é inválido');
     }
 
-    return this.generateUserToken(token.userId);
+    const user = await this.UserModel.findById(token.userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    return this.generateUserToken(token.userId, user.tipo_usuario);
   }
 
-  async generateUserToken(userId: Types.ObjectId) {
+  async generateUserToken(userId: Types.ObjectId, userType: UserType) {
     const accessToken = this.jwtService.sign(
       { userId: userId.toString() },
       { expiresIn: '1d' },
@@ -119,8 +140,35 @@ export class AuthService {
 
     await this.salvarRefreshToken(refreshToken, userId);
 
+    let providerId: string | undefined;
+    let tutorId: string | undefined;
+
+    if (userType === UserType.PROVIDER) {
+      const provider = await this.providersService.findOneByUserId(
+        userId.toString(),
+      );
+      if (!provider) {
+        throw new InternalServerErrorException(
+          'Perfil de prestador não encontrado após login.',
+        );
+      }
+      providerId = (provider._id as Types.ObjectId).toString();
+    } else if (userType === UserType.TUTOR) {
+      const tutor = await this.tutorsService.getByUserId(userId.toString());
+      if (!tutor) {
+        this.logger.warn(
+          `Perfil de tutor não encontrado para userId: ${userId}`,
+        );
+      } else {
+        tutorId = (tutor._id as Types.ObjectId).toString();
+      }
+    }
+
     return {
       token: accessToken,
+      userType: userType,
+      providerId: providerId,
+      tutorId: tutorId,
       user: {
         id: userId,
       },

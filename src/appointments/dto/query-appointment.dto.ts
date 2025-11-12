@@ -16,12 +16,17 @@ export class QueryAppointmentDto {
   @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9caaa' })
   @IsOptional()
   @IsMongoId()
-  pet?: string;
+  pet?: string | string[];
 
   @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9cbbb' })
   @IsOptional()
   @IsMongoId()
   provider?: string;
+
+  @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9cddd' })
+  @IsOptional()
+  @IsMongoId()
+  tutorId?: string;
 
   @ApiPropertyOptional({
     enum: AppointmentStatus,
@@ -90,9 +95,4 @@ export class QueryAppointmentDto {
   @IsOptional()
   @IsString()
   sort?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  dateFrom?: string;
 }
