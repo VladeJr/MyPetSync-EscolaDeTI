@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsEmail,
   IsEnum,
   IsInt,
   IsMongoId,
@@ -63,4 +64,15 @@ export class CreateAppointmentDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ example: '44999998888' })
+  @IsEmail()
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({ example: 'tutor.agenda@email.com' })
+  @IsOptional()
+  @IsString()
+  phone: string;
 }

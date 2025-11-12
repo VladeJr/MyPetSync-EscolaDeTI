@@ -36,6 +36,12 @@ export class Appointment {
 
   @Prop({ type: String })
   notes?: string;
+
+  @Prop({ type: String })
+  email?: string;
+
+  @Prop({ type: String })
+  phone?: string;
 }
 
 export const AppointmentSchema = SchemaFactory.createForClass(Appointment);
