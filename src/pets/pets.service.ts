@@ -8,6 +8,9 @@ import { TutorsService } from '../tutors/tutors.service';
 
 @Injectable()
 export class PetsService {
+  findAll() {
+      throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectModel(Pet.name) private petModel: Model<PetDocument>,
     private readonly tutorsService: TutorsService,
