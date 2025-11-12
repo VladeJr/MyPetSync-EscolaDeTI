@@ -12,9 +12,6 @@ import { TutorsModule } from 'src/tutors/tutors.module';
   ],
   controllers: [PetsController],
   providers: [PetsService],
-  exports: [
-    PetsService,
-    MongooseModule.forFeature([{ name: Pet.name, schema: PetSchema }]),
-  ],
+  exports: [PetsService],
 })
 export class PetsModule {}
