@@ -6,13 +6,21 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const frontendUrl = process.env.FRONTEND_URL;
+
+  const allowedOrigins = [
+    'http://localhost:5173', // front web
+    'http://localhost:8081', // front mobile
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:8081',
+  ];
+
+  if (frontendUrl) {
+    allowedOrigins.push(frontendUrl); // add URL de produção / railway domain
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:5173', // front web
-      'http://localhost:8081', // front mobile
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:8081',
-    ],
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true, // envio do header JWT
   });
