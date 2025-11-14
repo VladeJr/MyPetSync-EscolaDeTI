@@ -5,9 +5,9 @@ import { getModelToken } from '@nestjs/mongoose';
 describe('ExamsService', () => {
   let service: ExamsService;
   const mockExamModel = {
-    create: jest.fn().mockResolvedValue({ type: 'Hemograma' }),
+    create: jest.fn().mockResolvedValue({ _id: '1', type: 'Hemograma', __v: 0 }),
     find: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([{ type: 'Hemograma' }]),
+    exec: jest.fn().mockResolvedValue([{ _id: '1', type: 'Hemograma', __v: 0 }]),
   };
 
   beforeEach(async () => {
@@ -22,12 +22,13 @@ describe('ExamsService', () => {
   });
 
   it('deve criar exame', async () => {
-    const res = await service.create({ type: 'Hemograma' });
-    expect(res.type).toBe('Hemograma');
+    const createExamDto = { type: 'Hemograma' } as any;
+    const res = await service.create(createExamDto);
+    expect((res as any).type).toBe('Hemograma');
   });
 
   it('deve listar exames', async () => {
-    const exams = await service.findAll();
-    expect(exams.length).toBeGreaterThan(0);
+    const exams = await service.findAll({} as any);
+    expect(exams.items.length).toBeGreaterThan(0);
   });
 });
