@@ -5,10 +5,9 @@ import { Appointment, AppointmentDocument } from './schemas/appointment.schema';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
-import { Pet, PetDocument } from '../pets/schemas/pets.schema';
+import { Pet } from '../pets/schemas/pets.schema';
 import {
   Provider,
-  ProviderDocument,
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 import { PetsService } from '../pets/pets.service';
@@ -37,7 +36,7 @@ export class AppointmentsService {
     private readonly providerModel: Model<Provider>,
     private readonly providersService: ProvidersService,
     private readonly petsService: PetsService,
-  ) {}
+  ) { }
 
   private async assertPet(id: string | Types.ObjectId) {
     const ok = await this.petModel.exists({ _id: id });
@@ -239,6 +238,18 @@ export class AppointmentsService {
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
     return found;
+  }
+
+  async updateAppointmentStatus(
+    id: string,
+    updateData: { isRated: boolean } | { status: string }
+  ): Promise<void> {
+    const updated = await this.model.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true, lean: true },
+    );
+    if (!updated) throw new NotFoundException('Agendamento não encontrado para atualização de status.');
   }
 
   async update(id: string, dto: UpdateAppointmentDto) {
