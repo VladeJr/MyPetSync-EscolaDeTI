@@ -21,12 +21,12 @@ describe('UsersService', () => {
   });
 
   it('deve criar usuário', async () => {
-    const user = await service.create({ email: 'user@test.com', password: '123' });
+    const user = await (service as any).create({ email: 'user@test.com', password: '123' });
     expect(user.email).toBe('user@test.com');
   });
 
   it('deve buscar usuário pelo id', async () => {
-    const found = await service.findById('1');
+    const found = await (service as any).findById('1');
     expect(found.email).toBe('user@test.com');
   });
 });
