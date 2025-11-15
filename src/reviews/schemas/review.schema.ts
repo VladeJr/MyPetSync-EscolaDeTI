@@ -23,6 +23,10 @@ export class Review {
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);
 
-ReviewSchema.index({ provider: 1, author: 1 }, { unique: true, sparse: true });
-ReviewSchema.index({ service: 1, author: 1 }, { unique: true, sparse: true });
+// Índice único atualizado para permitir provider + service + author
+ReviewSchema.index(
+  { provider: 1, service: 1, author: 1 },
+  { unique: true, sparse: true }
+);
+
 ReviewSchema.index({ rating: 1 });

@@ -24,6 +24,11 @@ export class CreateAppointmentDto {
   @IsMongoId()
   provider: string;
 
+  @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9ceee' })
+  @IsOptional()
+  @IsMongoId()
+  service?: string;
+
   @ApiProperty({ example: '2025-10-25T14:30:00.000Z' })
   @IsDateString()
   dateTime: string;

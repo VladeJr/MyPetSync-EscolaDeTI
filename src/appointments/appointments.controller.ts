@@ -32,7 +32,7 @@ export class AppointmentsController {
   constructor(
     private readonly service: AppointmentsService,
     private readonly tutorsService: TutorsService,
-  ) {}
+  ) { }
 
   @Get('stats/today')
   @ApiOkResponse({
@@ -101,6 +101,7 @@ export class AppointmentsController {
     @Param('providerId') providerId?: string,
   ) {
     if (q.tutorId) {
+      // ✅ CORREÇÃO: Usar findAllByTutorId (método correto)
       return this.service.findAllByTutorId(q.tutorId, q);
     }
     if (petId || providerId) {
@@ -122,8 +123,16 @@ export class AppointmentsController {
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Consulta atualizada' })
-  update(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
-    return this.service.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
+    console.log('📝 Atualizando agendamento:', id);
+    console.log('📝 Dados recebidos:', dto);
+    
+    const updated = await this.service.update(id, dto);
+    
+    console.log('✅ Agendamento atualizado:', updated);
+    console.log('✅ Data retornada:', updated.dateTime);
+    
+    return updated;
   }
 
   @Delete(':id')

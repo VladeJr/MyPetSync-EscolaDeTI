@@ -54,13 +54,19 @@ export class ReviewsService {
       throw new NotFoundException('É necessário informar provider ou service.');
     }
 
-    const data: any = { ...dto, author: authorObjId };
-    if (dto.provider) data.provider = new Types.ObjectId(dto.provider);
-    if (dto.service) data.service = new Types.ObjectId(dto.service);
+    const data: any = {
+      ...dto,
+      author: authorObjId,
+      provider: dto.provider ? new Types.ObjectId(dto.provider) : undefined,
+      service: dto.service ? new Types.ObjectId(dto.service) : undefined,
+    };
 
-    const filter: FilterQuery<ReviewDocument> = { author: authorObjId };
-    if (data.provider) filter.provider = data.provider;
-    if (data.service) filter.service = data.service;
+    // Verifica conflito na combinação provider + service + author
+    const filter: FilterQuery<ReviewDocument> = {
+      author: authorObjId,
+      provider: data.provider,
+      service: data.service,
+    };
 
     const existingReview = await this.model.findOne(filter);
     if (existingReview) {
@@ -81,6 +87,7 @@ export class ReviewsService {
     const filter: FilterQuery<ReviewDocument> = {};
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
     if (q.service) filter.service = new Types.ObjectId(q.service);
+    if (q.author) filter.author = new Types.ObjectId(q.author);
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '10', 10), 1), 100);
