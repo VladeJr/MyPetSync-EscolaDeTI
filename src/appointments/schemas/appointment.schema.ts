@@ -11,6 +11,9 @@ export class Appointment {
   @Prop({ type: Types.ObjectId, ref: 'Provider', required: true, index: true })
   provider: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Service' }) // <-- adicionando service
+  service?: Types.ObjectId;
+
   @Prop({ required: true })
   dateTime: Date;
 
@@ -48,3 +51,4 @@ export const AppointmentSchema = SchemaFactory.createForClass(Appointment);
 
 AppointmentSchema.index({ dateTime: 1 });
 AppointmentSchema.index({ pet: 1, provider: 1, dateTime: 1 });
+ 

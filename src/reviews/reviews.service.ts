@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types, SortOrder } from 'mongoose';
@@ -16,9 +17,7 @@ export class ReviewsService {
     @InjectModel(Review.name) private readonly model: Model<ReviewDocument>,
   ) {}
 
-  async getAverageRatingByProvider(
-    providerId: string,
-  ): Promise<{ average: number; count: number }> {
+  async getAverageRatingByProvider(providerId: string): Promise<{ average: number; count: number }> {
     const providerObjId = new Types.ObjectId(providerId);
 
     const result = await this.model.aggregate([
@@ -32,9 +31,7 @@ export class ReviewsService {
       },
     ]);
 
-    if (result.length === 0) {
-      return { average: 0.0, count: 0 };
-    }
+    if (result.length === 0) return { average: 0.0, count: 0 };
 
     const { average, count } = result[0];
     return { average: parseFloat(average.toFixed(1)), count };
@@ -42,7 +39,6 @@ export class ReviewsService {
 
   async findRecentByProvider(providerId: string, limit = 5) {
     const providerObjId = new Types.ObjectId(providerId);
-
     return this.model
       .find({ provider: providerObjId })
       .sort({ createdAt: -1 })
@@ -52,27 +48,46 @@ export class ReviewsService {
   }
 
   async create(authorId: string, dto: CreateReviewDto) {
-    const data: any = {
-      ...dto,
-      author: new Types.ObjectId(authorId),
-    };
+    const authorObjId = new Types.ObjectId(authorId);
+
     if (!dto.provider && !dto.service) {
       throw new NotFoundException('É necessário informar provider ou service.');
     }
-    if (dto.provider) {
-      data.provider = new Types.ObjectId(dto.provider);
+
+    const data: any = {
+      ...dto,
+      author: authorObjId,
+      provider: dto.provider ? new Types.ObjectId(dto.provider) : undefined,
+      service: dto.service ? new Types.ObjectId(dto.service) : undefined,
+    };
+
+    // Verifica conflito na combinação provider + service + author
+    const filter: FilterQuery<ReviewDocument> = {
+      author: authorObjId,
+      provider: data.provider,
+      service: data.service,
+    };
+
+    const existingReview = await this.model.findOne(filter);
+    if (existingReview) {
+      throw new ConflictException('Você já enviou uma avaliação para este item.');
     }
-    if (dto.service) {
-      data.service = new Types.ObjectId(dto.service);
-    }
+
     const created = await this.model.create(data);
-    return created.toObject();
+
+    return this.model
+      .findById(created._id)
+      .populate('author', 'name email')
+      .populate('provider', 'name city state')
+      .populate('service', 'name price')
+      .lean();
   }
 
   async findAll(q: QueryReviewDto) {
     const filter: FilterQuery<ReviewDocument> = {};
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
     if (q.service) filter.service = new Types.ObjectId(q.service);
+    if (q.author) filter.author = new Types.ObjectId(q.author);
 
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '10', 10), 1), 100);
@@ -85,6 +100,8 @@ export class ReviewsService {
       this.model
         .find(filter)
         .populate('author', 'name email')
+        .populate('provider', 'name city state')
+        .populate('service', 'name price')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -102,6 +119,7 @@ export class ReviewsService {
       .populate('provider', 'name city state')
       .populate('service', 'name price')
       .lean();
+
     if (!found) throw new NotFoundException('Avaliação não encontrada.');
     return found;
   }
@@ -110,9 +128,7 @@ export class ReviewsService {
     const review = await this.model.findById(id);
     if (!review) throw new NotFoundException('Avaliação não encontrada.');
     if (review.author.toString() !== authorId) {
-      throw new ForbiddenException(
-        'Você só pode editar suas próprias avaliações.',
-      );
+      throw new ForbiddenException('Você só pode editar suas próprias avaliações.');
     }
     Object.assign(review, dto);
     await review.save();
@@ -123,9 +139,7 @@ export class ReviewsService {
     const review = await this.model.findById(id);
     if (!review) throw new NotFoundException('Avaliação não encontrada.');
     if (review.author.toString() !== authorId) {
-      throw new ForbiddenException(
-        'Você só pode excluir suas próprias avaliações.',
-      );
+      throw new ForbiddenException('Você só pode excluir suas próprias avaliações.');
     }
     await review.deleteOne();
     return { success: true };

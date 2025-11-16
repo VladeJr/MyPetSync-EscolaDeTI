@@ -6,6 +6,10 @@ export class QueryReviewDto {
   @IsOptional() @IsMongoId()
   provider?: string;
 
+  @ApiPropertyOptional({ example: '691271c8a7a74ab4c30b2a9f' })
+  @IsOptional() @IsMongoId()
+  author?: string;
+
   @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9cbbb' })
   @IsOptional() @IsMongoId()
   service?: string;
@@ -18,7 +22,7 @@ export class QueryReviewDto {
   @IsOptional() @IsNumberString()
   limit?: string;
 
-  @ApiPropertyOptional({ enum: ['asc','desc'], example: 'desc' })
-  @IsOptional() @IsEnum(['asc','desc'])
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], example: 'desc' })
+  @IsOptional() @IsEnum(['asc', 'desc'])
   order?: 'asc' | 'desc';
 }
