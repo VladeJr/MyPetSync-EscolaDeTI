@@ -9,6 +9,7 @@ import { Tutor, TutorSchema } from '../tutors/schemas/tutor.schema';
 import { ProvidersModule } from 'src/providers/providers.module';
 import { TutorsModule } from 'src/tutors/tutors.module';
 import { PetsModule } from '../pets/pets.module';
+import { ReviewsModule } from 'src/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PetsModule } from '../pets/pets.module';
     forwardRef(() => ProvidersModule),
     TutorsModule,
     PetsModule,
+    forwardRef(() => ReviewsModule),
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
