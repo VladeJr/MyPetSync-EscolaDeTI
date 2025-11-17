@@ -5,10 +5,9 @@ import { Appointment, AppointmentDocument } from './schemas/appointment.schema';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
-import { Pet, PetDocument } from '../pets/schemas/pets.schema';
+import { Pet } from '../pets/schemas/pets.schema';
 import {
   Provider,
-  ProviderDocument,
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 import { PetsService } from '../pets/pets.service';
@@ -17,7 +16,7 @@ const petPopulationConfig = {
   path: 'pet',
   select: 'nome tutorId species',
   populate: {
-    path: 'tutorId',
+    path: 'tutorId', 
     select: 'name _id',
   },
 };
@@ -25,6 +24,11 @@ const petPopulationConfig = {
 const providerPopulationConfig = {
   path: 'provider',
   select: 'name email city state whatsapp',
+};
+
+const servicePopulationConfig = {
+  path: 'service',
+  select: 'name price duration',
 };
 
 @Injectable()
@@ -37,7 +41,7 @@ export class AppointmentsService {
     private readonly providerModel: Model<Provider>,
     private readonly providersService: ProvidersService,
     private readonly petsService: PetsService,
-  ) {}
+  ) { }
 
   private async assertPet(id: string | Types.ObjectId) {
     const ok = await this.petModel.exists({ _id: id });
@@ -97,9 +101,11 @@ export class AppointmentsService {
   }
 
   async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) {
+
     const pets = await this.petsService.findAllByTutor(tutorId);
 
     if (pets.length === 0) {
+      console.log('⚠️ Nenhum pet encontrado para este tutor!');
       return {
         items: [],
         total: 0,
@@ -110,6 +116,7 @@ export class AppointmentsService {
     }
 
     const petIds = pets.map((pet: any) => pet._id.toString());
+    
     const petQuery: QueryAppointmentDto = {
       ...q,
       pet: petIds as unknown as string,
@@ -173,7 +180,7 @@ export class AppointmentsService {
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate(petPopulationConfig)
+        .populate(petPopulationConfig) 
         .populate(providerPopulationConfig)
         .sort(sort)
         .skip(skip)
@@ -182,6 +189,12 @@ export class AppointmentsService {
       this.model.countDocuments(filter),
     ]);
 
+    const allItems = await this.model
+      .find(filter)
+      .populate(petPopulationConfig)
+      .populate(providerPopulationConfig)
+      .sort(sort)
+      .lean();
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
@@ -234,24 +247,64 @@ export class AppointmentsService {
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate(petPopulationConfig)
+      .populate(petPopulationConfig) // ✅ Já está corrigido
       .populate(providerPopulationConfig)
+      .populate(servicePopulationConfig)
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
-    return found;
+    return found; 
+  }
+
+  async updateAppointmentStatus(
+    id: string,
+    updateData: { isRated: boolean } | { status: string }
+  ): Promise<void> {
+    const updated = await this.model.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true, lean: true },
+    );
+    if (!updated) throw new NotFoundException('Agendamento não encontrado para atualização de status.');
   }
 
   async update(id: string, dto: UpdateAppointmentDto) {
     if (dto.pet) await this.assertPet(dto.pet);
     if (dto.provider) await this.assertProvider(dto.provider);
-    const payload: any = { ...dto };
-    if (dto.dateTime) payload.dateTime = new Date(dto.dateTime);
+    
+    const payload: any = {};
+    
+    if (dto.dateTime !== undefined) {
+      payload.dateTime = new Date(dto.dateTime);
+    }
+    if (dto.duration !== undefined) payload.duration = dto.duration;
+    if (dto.reason !== undefined) payload.reason = dto.reason;
+    if (dto.location !== undefined) payload.location = dto.location;
+    if (dto.price !== undefined) payload.price = dto.price;
+    if (dto.status !== undefined) payload.status = dto.status;
+    if (dto.notes !== undefined) payload.notes = dto.notes;
+    if (dto.email !== undefined) payload.email = dto.email;
+    if (dto.phone !== undefined) payload.phone = dto.phone;
+    if (dto.pet !== undefined) payload.pet = new Types.ObjectId(dto.pet);
+    if (dto.provider !== undefined) payload.provider = new Types.ObjectId(dto.provider);
+    if (dto.service !== undefined) {
+      payload.service = dto.service ? new Types.ObjectId(dto.service) : null;
+    }
 
-    const updated = await this.model.findByIdAndUpdate(
-      id,
+
+    const updated = await this.model.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
       { $set: payload },
-      { new: true, runValidators: true, lean: true },
-    );
+      { 
+        new: true, 
+        runValidators: true,
+        context: 'query'
+      }
+    )
+      .populate(petPopulationConfig)
+      .populate(providerPopulationConfig)
+      .populate(servicePopulationConfig)
+      .lean();
+      
     if (!updated) throw new NotFoundException('Consulta não encontrada.');
     return updated;
   }
@@ -265,6 +318,7 @@ export class AppointmentsService {
   async removeByPet(petId: string | Types.ObjectId) {
     await this.model.deleteMany({ pet: petId as any });
   }
+
   async removeByProvider(providerId: string | Types.ObjectId) {
     await this.model.deleteMany({ provider: providerId as any });
   }

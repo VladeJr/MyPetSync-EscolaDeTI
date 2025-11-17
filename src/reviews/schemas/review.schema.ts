@@ -8,11 +8,11 @@ export class Review {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   author: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Provider', required: false, index: true })
-  provider?: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Provider', required: true })
+  provider: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Service', required: false, index: true })
-  service?: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Appointment', required: true, index: true })
+  appointment: Types.ObjectId;
 
   @Prop({ required: true, min: 1, max: 5 })
   rating: number;
@@ -23,6 +23,10 @@ export class Review {
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);
 
-ReviewSchema.index({ provider: 1, author: 1 }, { unique: true, sparse: true });
-ReviewSchema.index({ service: 1, author: 1 }, { unique: true, sparse: true });
+ReviewSchema.index(
+  { appointment: 1, author: 1 },
+  { unique: true }
+);
+
 ReviewSchema.index({ rating: 1 });
+ReviewSchema.index({ provider: 1 });
