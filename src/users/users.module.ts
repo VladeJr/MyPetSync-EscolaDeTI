@@ -1,3 +1,5 @@
+// users.module.ts
+
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
@@ -12,6 +14,10 @@ import { TutorsModule } from 'src/tutors/tutors.module';
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  exports: [UsersService],
+  // 💡 CORREÇÃO AQUI: EXPORTE O MODELO DO MONGOOSE
+  exports: [
+    UsersService,
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])
+  ],
 })
-export class UsersModule {}
+export class UsersModule { }

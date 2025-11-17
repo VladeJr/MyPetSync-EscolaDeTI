@@ -12,8 +12,8 @@ export class QueryReviewDto {
 
   @ApiPropertyOptional({ example: '66f1d9d1c6a7bcf0b1a9cbbb' })
   @IsOptional() @IsMongoId()
-  service?: string;
-
+  appointment?: string; 
+  
   @ApiPropertyOptional({ example: '1' })
   @IsOptional() @IsNumberString()
   page?: string;

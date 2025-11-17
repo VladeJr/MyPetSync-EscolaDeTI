@@ -12,12 +12,11 @@ import {
 import { ProvidersService } from 'src/providers/providers.service';
 import { PetsService } from '../pets/pets.service';
 
-// ✅ VOLTAR para tutorId (compatibilidade com frontend)
 const petPopulationConfig = {
   path: 'pet',
   select: 'nome tutorId species',
   populate: {
-    path: 'tutorId', // ✅ VOLTAR para tutorId
+    path: 'tutorId', 
     select: 'name _id',
   },
 };
@@ -101,19 +100,9 @@ export class AppointmentsService {
     return this.findAll({ ...q, provider: providerId });
   }
 
-  // ✅ MANTER: Método original com tutorId
   async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) {
-    console.log('🔍 Buscando agendamentos para tutorId:', tutorId);
-    console.log('🔍 Query params:', q);
 
-    // ✅ VOLTAR: Usar findAllByTutor (método original)
     const pets = await this.petsService.findAllByTutor(tutorId);
-
-    console.log('🐕 Pets encontrados:', pets.map((p: any) => ({ 
-      id: p._id, 
-      nome: p.nome,
-      tutorId: p.tutorId // ✅ VOLTAR para tutorId
-    })));
 
     if (pets.length === 0) {
       console.log('⚠️ Nenhum pet encontrado para este tutor!');
@@ -127,7 +116,6 @@ export class AppointmentsService {
     }
 
     const petIds = pets.map((pet: any) => pet._id.toString());
-    console.log('🔗 Pet IDs que serão usados no filtro:', petIds);
     
     const petQuery: QueryAppointmentDto = {
       ...q,
@@ -142,7 +130,6 @@ export class AppointmentsService {
     if (q.provider) filter.provider = new Types.ObjectId(q.provider);
     if (q.pet) {
       const petIds = Array.isArray(q.pet) ? q.pet : [q.pet];
-      console.log('🔍 Pet IDs recebidos no findAll:', petIds);
       filter.pet = { $in: petIds.map((id) => new Types.ObjectId(id)) };
     }
     if (q.status) {
@@ -176,8 +163,6 @@ export class AppointmentsService {
       if (q.maxPrice) filter.price.$lte = Number(q.maxPrice);
     }
 
-    console.log('📋 Filter aplicado:', JSON.stringify(filter, null, 2));
-
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
@@ -192,12 +177,10 @@ export class AppointmentsService {
       sort = sortAsc;
     }
 
-    console.log('🔍 Skip:', skip, 'Limit:', limit, 'Sort:', JSON.stringify(sort));
-
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate(petPopulationConfig) // ✅ Já está corrigido
+        .populate(petPopulationConfig) 
         .populate(providerPopulationConfig)
         .sort(sort)
         .skip(skip)
@@ -206,32 +189,12 @@ export class AppointmentsService {
       this.model.countDocuments(filter),
     ]);
 
-    console.log('📊 Total no banco:', total, 'Retornados com limit:', items.length);
-
-    // ✅ TESTE: Busca SEM limit para ver todos os registros
     const allItems = await this.model
       .find(filter)
       .populate(petPopulationConfig)
       .populate(providerPopulationConfig)
       .sort(sort)
       .lean();
-
-    console.log('📊 TESTE SEM LIMIT/SKIP:', allItems.length);
-    allItems.forEach((i: any) => {
-      console.log(`   - ${i._id} (status: ${i.status}, dia: ${new Date(i.dateTime).getDate()}, pet: ${i.pet?.nome})`);
-    });
-
-    console.log('✅ Agendamentos encontrados:', items.length);
-    console.log('✅ Datas dos agendamentos:', items.map((i: any) => ({
-      id: i._id,
-      dateTime: i.dateTime,
-      dia: new Date(i.dateTime).getDate(),
-      pet: i.pet?._id,
-      petNome: i.pet?.nome,
-      // ✅ VOLTAR: Mostrar tutorId do pet
-      petTutorId: i.pet?.tutorId?._id || i.pet?.tutorId
-    })));
-
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
@@ -308,14 +271,8 @@ export class AppointmentsService {
     if (dto.pet) await this.assertPet(dto.pet);
     if (dto.provider) await this.assertProvider(dto.provider);
     
-    console.log('🔍 ANTES da atualização - Agendamento:', id);
-    const antes = await this.model.findById(id).lean();
-    console.log('   Pet:', antes?.pet);
-    console.log('   Status:', antes?.status);
-    
     const payload: any = {};
     
-    // Apenas incluir campos que estão presentes no DTO
     if (dto.dateTime !== undefined) {
       payload.dateTime = new Date(dto.dateTime);
     }
@@ -329,13 +286,10 @@ export class AppointmentsService {
     if (dto.phone !== undefined) payload.phone = dto.phone;
     if (dto.pet !== undefined) payload.pet = new Types.ObjectId(dto.pet);
     if (dto.provider !== undefined) payload.provider = new Types.ObjectId(dto.provider);
-    
-    // ✅ service existe no DTO
     if (dto.service !== undefined) {
       payload.service = dto.service ? new Types.ObjectId(dto.service) : null;
     }
 
-    console.log('📝 Payload de atualização:', payload);
 
     const updated = await this.model.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
@@ -350,11 +304,6 @@ export class AppointmentsService {
       .populate(providerPopulationConfig)
       .populate(servicePopulationConfig)
       .lean();
-    
-    console.log('✅ DEPOIS da atualização - Agendamento:', id);
-    console.log('   Pet:', updated?.pet?._id);
-    console.log('   Status:', updated?.status);
-    console.log('   Encontrado no banco?', !!updated);
       
     if (!updated) throw new NotFoundException('Consulta não encontrada.');
     return updated;
