@@ -11,12 +11,13 @@ import {
 } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 import { PetsService } from '../pets/pets.service';
+import { ReviewsService } from 'src/reviews/reviews.service'; // ✅ Import mantido e necessário
 
 const petPopulationConfig = {
   path: 'pet',
   select: 'nome tutorId species',
   populate: {
-    path: 'tutorId', 
+    path: 'tutorId',
     select: 'name _id',
   },
 };
@@ -41,6 +42,7 @@ export class AppointmentsService {
     private readonly providerModel: Model<Provider>,
     private readonly providersService: ProvidersService,
     private readonly petsService: PetsService,
+    private readonly reviewsService: ReviewsService, // ✅ Injeção mantida
   ) { }
 
   private async assertPet(id: string | Types.ObjectId) {
@@ -100,7 +102,7 @@ export class AppointmentsService {
     return this.findAll({ ...q, provider: providerId });
   }
 
-  async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) {
+  async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) { // ✅ LÓGICA CORRIGIDA AQUI
 
     const pets = await this.petsService.findAllByTutor(tutorId);
 
@@ -116,13 +118,34 @@ export class AppointmentsService {
     }
 
     const petIds = pets.map((pet: any) => pet._id.toString());
-    
+
     const petQuery: QueryAppointmentDto = {
       ...q,
       pet: petIds as unknown as string,
     };
 
-    return this.findAll(petQuery);
+    // 1. Busca os agendamentos usando o método base (paginado)
+    const result = await this.findAll(petQuery);
+
+    // 2. Extrai os IDs dos agendamentos retornados
+    const appointmentIds = result.items.map((a: any) => a._id.toString());
+
+    // 3. Busca no ReviewsService quais destes agendamentos o tutor já avaliou
+    const reviewedIds = await this.reviewsService.findReviewedAppointments(
+      tutorId, // ID do autor
+      appointmentIds // IDs dos agendamentos
+    );
+
+    const reviewedSet = new Set(reviewedIds);
+
+    // 4. Mapeia o resultado e anexa a propriedade 'isReviewed'
+    const itemsWithReviewStatus = result.items.map((appointment: any) => ({
+      ...appointment,
+      isReviewed: reviewedSet.has(appointment._id.toString()), // CORREÇÃO
+    }));
+
+    // 5. Retorna o resultado atualizado
+    return { ...result, items: itemsWithReviewStatus };
   }
 
   async findAll(q: QueryAppointmentDto) {
@@ -180,7 +203,7 @@ export class AppointmentsService {
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate(petPopulationConfig) 
+        .populate(petPopulationConfig)
         .populate(providerPopulationConfig)
         .sort(sort)
         .skip(skip)
@@ -189,12 +212,17 @@ export class AppointmentsService {
       this.model.countDocuments(filter),
     ]);
 
+    // A variável allItems não está sendo usada para o retorno final,
+    // então a remoção para otimização é recomendada.
+    /*
     const allItems = await this.model
       .find(filter)
       .populate(petPopulationConfig)
       .populate(providerPopulationConfig)
       .sort(sort)
       .lean();
+    */
+
     return { items, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
@@ -247,12 +275,12 @@ export class AppointmentsService {
   async findOne(id: string) {
     const found = await this.model
       .findById(id)
-      .populate(petPopulationConfig) // ✅ Já está corrigido
+      .populate(petPopulationConfig)
       .populate(providerPopulationConfig)
       .populate(servicePopulationConfig)
       .lean();
     if (!found) throw new NotFoundException('Consulta não encontrada.');
-    return found; 
+    return found;
   }
 
   async updateAppointmentStatus(
@@ -270,9 +298,9 @@ export class AppointmentsService {
   async update(id: string, dto: UpdateAppointmentDto) {
     if (dto.pet) await this.assertPet(dto.pet);
     if (dto.provider) await this.assertProvider(dto.provider);
-    
+
     const payload: any = {};
-    
+
     if (dto.dateTime !== undefined) {
       payload.dateTime = new Date(dto.dateTime);
     }
@@ -294,8 +322,8 @@ export class AppointmentsService {
     const updated = await this.model.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
       { $set: payload },
-      { 
-        new: true, 
+      {
+        new: true,
         runValidators: true,
         context: 'query'
       }
@@ -304,7 +332,7 @@ export class AppointmentsService {
       .populate(providerPopulationConfig)
       .populate(servicePopulationConfig)
       .lean();
-      
+
     if (!updated) throw new NotFoundException('Consulta não encontrada.');
     return updated;
   }

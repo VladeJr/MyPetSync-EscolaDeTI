@@ -48,6 +48,34 @@ export class ReviewsService {
       .lean();
   }
 
+  // ✅ NOVO MÉTODO DE CHECAGEM EM LOTE
+  async findReviewedAppointments(
+    authorId: string,
+    appointmentIds: string[],
+  ): Promise<string[]> {
+    const authorObjId = new Types.ObjectId(authorId);
+    
+    // Converte os IDs de string para ObjectId para usar no $in
+    const appointmentObjIds = appointmentIds
+        .filter(id => Types.ObjectId.isValid(id)) // Filtra IDs inválidos por segurança
+        .map((id) => new Types.ObjectId(id));
+
+    if (appointmentObjIds.length === 0) return [];
+    
+    const reviews = await this.model
+      .find({
+        author: authorObjId,
+        appointment: { $in: appointmentObjIds }, // FILTRO CORRETO POR AGENDAMENTO
+      })
+      .select('appointment') 
+      .lean()
+      .exec();
+
+    // Retorna uma lista de IDs de agendamentos que já foram avaliados
+    return reviews.map((review) => review.appointment.toString());
+  }
+  // ----------------------------------------------------
+
   async create(authorId: string, dto: CreateReviewDto) {
     if (!Types.ObjectId.isValid(authorId)) {
       throw new BadRequestException('ID de autor inválido');
