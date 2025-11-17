@@ -24,6 +24,11 @@ import { PetsModule } from '../pets/pets.module';
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
-  exports: [AppointmentsService],
+  exports: [
+    AppointmentsService,
+    MongooseModule.forFeature([
+      { name: Appointment.name, schema: AppointmentSchema }
+    ]),
+  ],
 })
-export class AppointmentsModule {}
+export class AppointmentsModule { }
