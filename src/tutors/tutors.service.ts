@@ -131,4 +131,18 @@ export class TutorsService {
       address: addresses[addressIndex],
     };
   }
+
+  async updateTutorByUserId(userId: string, updateData: any): Promise<Tutor> {
+    const updatedTutor = await this.model.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) }, 
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedTutor) {
+      throw new NotFoundException('Tutor não encontrado para este usuário.');
+    }
+
+    return updatedTutor;
+  }
 }
