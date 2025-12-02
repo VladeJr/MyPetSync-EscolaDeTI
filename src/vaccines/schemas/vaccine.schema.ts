@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 
 export type VaccineDocument = Vaccine & Document;
 
-@Schema({ timestamps: true, collection: 'vacines' })
+@Schema({ timestamps: true, collection: 'vaccines' })
 export class Vaccine {
   @Prop({ type: Types.ObjectId, ref: 'Pet', required: true, index: true })
   pet: Types.ObjectId;
