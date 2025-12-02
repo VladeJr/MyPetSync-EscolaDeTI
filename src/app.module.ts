@@ -16,6 +16,7 @@ import { FilesModule } from './files/files.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { VaccinesModule } from './vaccines/vaccines.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { RemindersModule } from './reminders/reminders.module';
     FilesModule,
     ReviewsModule,
     NotificationsModule,
-    RemindersModule
+    RemindersModule,
+    VaccinesModule,
   ],
   controllers: [],
   providers: [],
