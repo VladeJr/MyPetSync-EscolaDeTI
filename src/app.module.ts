@@ -17,6 +17,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { VaccinesModule } from './vaccines/vaccines.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { VaccinesModule } from './vaccines/vaccines.module';
     NotificationsModule,
     RemindersModule,
     VaccinesModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
