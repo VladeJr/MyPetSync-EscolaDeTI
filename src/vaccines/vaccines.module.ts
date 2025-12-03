@@ -6,13 +6,19 @@ import { VaccinesController } from './vaccine.controller';
 import { VaccinesService } from './vaccines.service';
 import { PetsModule } from 'src/pets/pets.module';
 import { Pet, PetSchema } from 'src/pets/schemas/pets.schema';
+import { TutorsModule } from 'src/tutors/tutors.module';
+import { ProvidersModule } from 'src/providers/providers.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Vaccine.name, schema: VaccineSchema },
-      { name: Pet.name, schema: PetSchema }]),
+    MongooseModule.forFeature([
+      { name: Vaccine.name, schema: VaccineSchema },
+      { name: Pet.name, schema: PetSchema },
+    ]),
     UsersModule,
-    PetsModule
+    PetsModule,
+    TutorsModule,
+    ProvidersModule,
   ],
   controllers: [VaccinesController],
   providers: [VaccinesService],

@@ -88,6 +88,7 @@ export class ChatService {
     if (!Types.ObjectId.isValid(roomId)) {
       return [];
     }
+    
 
     return this.messageModel
       .find({ roomId: new Types.ObjectId(roomId) })

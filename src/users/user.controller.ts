@@ -41,6 +41,9 @@ export class UsersController {
   })
   async getMe(@CurrentUser() user: { userId: string }): Promise<any> {
     const fullUser = await this.usersService.findByUserId(user.userId);
+    if (!fullUser) {
+      return null;
+    }
     const userIdString = (
       fullUser as UserDocument & { _id: Types.ObjectId }
     )._id.toHexString();
@@ -50,6 +53,8 @@ export class UsersController {
       nome: fullUser.nome,
       email: fullUser.email,
       telefone: fullUser.telefone,
+      role: (fullUser as any).tipo_usuario,
+      service: (fullUser as any).service || null,
     };
   }
 
@@ -61,17 +66,16 @@ export class UsersController {
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateUserDto,
   ): Promise<any> {
-    // Atualiza o User
-    const updatedUser = await this.usersService.updateUserProfile(user.userId, dto);
-    
-    // Se o nome foi alterado, atualiza também o Tutor
+    const updatedUser = await this.usersService.updateUserProfile(
+      user.userId,
+      dto,
+    );
     if (dto.nome) {
       try {
         await this.tutorsService.updateTutorByUserId(user.userId, {
-          name: dto.nome
+          name: dto.nome,
         });
       } catch (error) {
-        // Se não encontrar o tutor, apenas loga o erro mas não falha a requisição
         console.log('Tutor não encontrado para atualização:', error.message);
       }
     }

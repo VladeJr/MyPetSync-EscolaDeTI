@@ -8,8 +8,15 @@ import {
   Post,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
 import { QueryVaccineDto } from './dto/query-vaccine.dto';
@@ -19,27 +26,34 @@ import { VaccinesService } from './vaccines.service';
 @ApiTags('vaccines')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-/**
- * Controlador atende DOIS prefixos:
- *  - /vaccines
- *  - /pets/:petId/vaccines (rotas aninhadas)
- */
 @Controller(['vaccines', 'pets/:petId/vaccines'])
 export class VaccinesController {
   constructor(private readonly service: VaccinesService) {}
 
-  /** Cria vacina global: body precisa de pet; se vier aninhado, usa pet do path */
   @Post()
   @ApiOkResponse({ description: 'Vacina criada' })
-  create(@Body() dto: CreateVaccineDto, @Param('petId') petId?: string) {
+  create(
+    @Body() dto: CreateVaccineDto,
+    @Param('petId') petId?: string,
+    @Req() req?: any,
+  ) {
+    const user = req.user;
+
     if (petId) {
       const { pet, ...payload } = dto;
-      return this.service.createForPet(petId, payload);
+      return this.service.createForPet(petId, payload, user);
     }
-    return this.service.create(dto);
+    return this.service.create(dto, user);
   }
 
-  /** Lista com filtros/paginação; se vier aninhado, força pet */
+  @Get('pet/:id')
+  @ApiOperation({ summary: 'Lista todas as vacinas de um pet específico' })
+  @ApiParam({ name: 'id', description: 'ID do pet' })
+  @ApiOkResponse({ description: 'Retorna a lista de vacinas.' })
+  async findAllByPetId(@Param('id') petId: string) {
+    return this.service.findAllByPetId(petId);
+  }
+
   @Get()
   @ApiOkResponse({ description: 'Lista paginada + filtros' })
   findAll(@Query() q: QueryVaccineDto, @Param('petId') petId?: string) {
