@@ -70,9 +70,35 @@ export class ChatService {
       return [];
     }
 
-    return this.messageModel
-      .find({ roomId: new Types.ObjectId(roomId) })
-      .sort({ createdAt: 1 })
-      .exec();
+  async markMessagesAsRead(roomId: string, userId: string) {
+    await this.messageModel.updateMany(
+      {
+        roomId: new Types.ObjectId(roomId),
+        senderId: { $ne: new Types.ObjectId(userId) },
+      },
+      { $set: { read: true } },
+    );
+
+    return true;
   }
+  
+
+    return this.messageModel
+const rooms = await this.chatRoomModel
+  .find({ participants: new Types.ObjectId(userId), isActive: true })
+  .sort({ updatedAt: -1 })
+  .exec();
+
+for (const room of rooms) {
+  const count = await this.messageModel.countDocuments({
+    roomId: room._id,
+    senderId: { $ne: new Types.ObjectId(userId) },
+    read: false,
+  });
+
+  (room as any)._doc.unreadCount = count;
+ }
+
+return rooms;
+ }
 }

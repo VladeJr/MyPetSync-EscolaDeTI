@@ -1,4 +1,4 @@
-import {
+  import {
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
@@ -43,4 +43,16 @@ export class ChatGateway {
 
     this.server.to(payload.roomId).emit('newMessage', message);
   }
+
+    @SubscribeMessage('typing')
+  async handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string },
+  ) {
+    this.server.to(payload.roomId).emit('userTyping', {
+      roomId: payload.roomId,
+      userId: client.data.userId,
+    });
+  }
+
 }
