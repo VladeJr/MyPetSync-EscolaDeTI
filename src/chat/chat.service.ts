@@ -33,6 +33,7 @@ export class ChatService {
     }
     return this.chatRoomModel
       .find({ participants: new Types.ObjectId(userId), isActive: true })
+      .populate('participants', 'nome tipo_usuario')
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -43,6 +44,24 @@ export class ChatService {
     }
     const room = await this.chatRoomModel.findById(roomId).exec();
     if (!room) throw new NotFoundException('Sala não encontrada');
+    return room;
+  }
+
+  async getOrCreateRoomForParticipants(userIds: string[], name?: string) {
+    const participants = userIds.map((id) => new Types.ObjectId(id));
+
+    const existingRoom = await this.chatRoomModel.findOne({
+      participants: { $all: participants },
+      isActive: true,
+    });
+
+    if (existingRoom) return existingRoom;
+
+    const room = await this.chatRoomModel.create({
+      name: name ?? 'Atendimento',
+      participants,
+    });
+
     return room;
   }
 
