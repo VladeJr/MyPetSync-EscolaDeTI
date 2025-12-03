@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
 import { Vaccine, VaccineDocument } from './schemas/vaccine.schema';
@@ -30,6 +34,17 @@ export class VaccinesService {
 
   async createForPet(petId: string, payload: Omit<CreateVaccineDto, 'pet'>) {
     return this.create({ ...payload, pet: petId });
+  }
+
+  async findAllByPetId(petId: string): Promise<Vaccine[]> {
+    if (!Types.ObjectId.isValid(petId)) {
+      throw new BadRequestException('ID do Pet inválido.');
+    }
+
+    return this.model
+      .find({ pet: new Types.ObjectId(petId) })
+      .sort({ appliedAt: -1, nextDoseAt: 1 })
+      .lean();
   }
 
   async findAll(q: QueryVaccineDto) {

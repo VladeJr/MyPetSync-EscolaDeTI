@@ -29,7 +29,7 @@ import { CurrentUser } from 'src/shared/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 @Controller('pets')
 export class PetsController {
-  constructor(private readonly petsService: PetsService) { }
+  constructor(private readonly petsService: PetsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Cria um novo pet para o user autenticado' })
@@ -69,6 +69,18 @@ export class PetsController {
     return this.petsService.findById(user.userId, id);
   }
 
+  @Get('provider/:id')
+  @ApiOperation({
+    summary: 'Busca um pet por ID para Prestadores de Serviço.',
+  })
+  @ApiParam({ name: 'id', description: 'ID do pet' })
+  @ApiOkResponse({
+    description: 'Retorna o pet para visualização de prontuário.',
+  })
+  async findByIdForProvider(@Param('id') id: string): Promise<Pet> {
+    return this.petsService.findByIdUnrestricted(id);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza pet por ID' })
   @ApiOkResponse({ description: 'Pet atualizado com sucesso' })
@@ -90,5 +102,4 @@ export class PetsController {
     await this.petsService.delete(user.userId, id);
     return { message: 'Pet removido com sucesso' };
   }
-
 }

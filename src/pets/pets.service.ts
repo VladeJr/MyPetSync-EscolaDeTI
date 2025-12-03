@@ -9,13 +9,13 @@ import { TutorsService } from '../tutors/tutors.service';
 @Injectable()
 export class PetsService {
   findAll() {
-      throw new Error('Method not implemented.');
+    throw new Error('Method not implemented.');
   }
   constructor(
     @InjectModel(Pet.name) private petModel: Model<PetDocument>,
     private readonly tutorsService: TutorsService,
   ) {}
-   
+
   private async _getTutorDocumentId(userId: string): Promise<string> {
     const tutor = await this.tutorsService.getByUserId(userId);
     if (!tutor) {
@@ -23,7 +23,7 @@ export class PetsService {
         'Tutor não encontrado. Certifique-se de que o usuário tem um perfil de Tutor.',
       );
     }
-    return tutor._id.toString(); 
+    return tutor._id.toString();
   }
 
   async create(tutorId: string, createPetDto: CreatePetDto): Promise<Pet> {
@@ -83,12 +83,27 @@ export class PetsService {
     return pet;
   }
 
+  async findByIdUnrestricted(id: string): Promise<Pet> {
+    const pet = await this.petModel
+      .findById(id)
+      .populate({
+        path: 'tutorId',
+        select: 'name phone email',
+      })
+      .exec();
+
+    if (!pet) {
+      throw new NotFoundException(`Pet com id ${id} não encontrado.`);
+    }
+
+    return pet;
+  }
   async getPetForTutor(tutorId: string, id: string): Promise<PetDocument> {
     const tutorDocumentId = await this._getTutorDocumentId(tutorId);
     const pet = await this.petModel
       .findOne({
         _id: new Types.ObjectId(id),
-        tutorId: new Types.ObjectId(tutorDocumentId), 
+        tutorId: new Types.ObjectId(tutorDocumentId),
       })
       .exec();
 
@@ -115,7 +130,9 @@ export class PetsService {
     );
 
     if (!updatedPet) {
-      throw new NotFoundException(`Pet com id ${id} não encontrado ou não pertence a este tutor.`);
+      throw new NotFoundException(
+        `Pet com id ${id} não encontrado ou não pertence a este tutor.`,
+      );
     }
 
     return updatedPet;
@@ -123,13 +140,17 @@ export class PetsService {
 
   async delete(userId: string, petId: string): Promise<{ message: string }> {
     const tutorDocumentId = await this._getTutorDocumentId(userId);
-    const result = await this.petModel.deleteOne({
-      _id: new Types.ObjectId(petId),
-      tutorId: new Types.ObjectId(tutorDocumentId), 
-    }).exec();
+    const result = await this.petModel
+      .deleteOne({
+        _id: new Types.ObjectId(petId),
+        tutorId: new Types.ObjectId(tutorDocumentId),
+      })
+      .exec();
 
     if (result.deletedCount === 0) {
-      throw new NotFoundException('Pet não encontrado ou não pertence a este tutor.');
+      throw new NotFoundException(
+        'Pet não encontrado ou não pertence a este tutor.',
+      );
     }
     return { message: 'Pet removido com sucesso' };
   }
