@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,12 +11,21 @@ import { CreateVaccineDto } from './dto/create-vaccine.dto';
 import { UpdateVaccineDto } from './dto/update-vaccine.dto';
 import { QueryVaccineDto } from './dto/query-vaccine.dto';
 import { Pet, PetDocument } from '../pets/schemas/pets.schema';
+import { TutorsService } from '../tutors/tutors.service';
+import { ProvidersService } from '../providers/providers.service';
+
+interface UserPayload {
+  _id: string;
+  role: 'tutor' | 'provider' | 'admin' | string;
+}
 
 @Injectable()
 export class VaccinesService {
   constructor(
     @InjectModel(Vaccine.name) private readonly model: Model<VaccineDocument>,
     @InjectModel(Pet.name) private readonly petModel: Model<PetDocument>,
+    private readonly tutorsService: TutorsService,
+    private readonly providersService: ProvidersService,
   ) {}
 
   private async assertPet(petId: string | Types.ObjectId) {
@@ -23,17 +33,65 @@ export class VaccinesService {
     if (!exists) throw new NotFoundException('Pet não encontrado.');
   }
 
-  async create(dto: CreateVaccineDto) {
-    await this.assertPet(dto.pet);
+  async create(dto: CreateVaccineDto, user: UserPayload) {
+    const petId = dto.pet;
+    const pet = await this.petModel.findById(petId);
+    if (!pet) throw new NotFoundException('Pet não encontrado.');
+
+    let finalProviderId: string | undefined = undefined;
+
+    const dtoProviderId = (dto as any).providerId;
+
+    if (user.role === 'tutor') {
+      const petOwnerId = (pet as any).owner.toString();
+
+      if (petOwnerId !== user._id.toString()) {
+        throw new ForbiddenException(
+          'Você não tem permissão para cadastrar vacinas para este pet.',
+        );
+      }
+
+      if (dtoProviderId) {
+        throw new ForbiddenException(
+          'Tutores não podem preencher o ID do Provedor. Apenas Provedores podem cadastrar vacinas em seu próprio nome.',
+        );
+      }
+    } else if (user.role === 'provider') {
+      const provider = await this.providersService.findOneByUserId(user._id);
+
+      if (!provider) {
+        throw new ForbiddenException(
+          'Perfil de provedor não encontrado. Verifique seu cadastro.',
+        );
+      }
+
+      finalProviderId = provider._id.toString();
+      if (dtoProviderId && finalProviderId !== dtoProviderId) {
+        throw new ForbiddenException(
+          'O Provedor da vacina deve ser o seu próprio ID de Provedor.',
+        );
+      }
+    } else {
+      throw new ForbiddenException(
+        'Sua função não tem permissão para esta ação.',
+      );
+    }
+
     const created = await this.model.create({
       ...dto,
-      pet: new Types.ObjectId(dto.pet),
+      pet: new Types.ObjectId(petId),
+      provider: user.role === 'provider' ? finalProviderId : dtoProviderId,
     });
+
     return created.toObject();
   }
 
-  async createForPet(petId: string, payload: Omit<CreateVaccineDto, 'pet'>) {
-    return this.create({ ...payload, pet: petId });
+  async createForPet(
+    petId: string,
+    payload: Omit<CreateVaccineDto, 'pet'>,
+    user: UserPayload,
+  ) {
+    return this.create({ ...payload, pet: petId } as CreateVaccineDto, user);
   }
 
   async findAllByPetId(petId: string): Promise<Vaccine[]> {
