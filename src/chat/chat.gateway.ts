@@ -6,12 +6,12 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
+import { UseGuards } from '@nestjs/common';
+import { WsJwtGuard } from 'src/auth/guards/ws-auth.guard';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(WsJwtGuard)
 @WebSocketGateway({
   cors: { origin: '*' },
   namespace: '/chat',
