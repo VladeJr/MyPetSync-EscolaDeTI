@@ -8,7 +8,7 @@ export class Vaccine {
   @Prop({ type: Types.ObjectId, ref: 'Pet', required: true, index: true })
   pet: Types.ObjectId;
 
-  @Prop({ requires: true, trim: true, maxlength: 120 })
+  @Prop({ required: true, trim: true, maxlength: 120 })
   name: string;
 
   @Prop({ trim: true, maxlength: 120 })
