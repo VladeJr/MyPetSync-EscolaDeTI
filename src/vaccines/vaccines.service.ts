@@ -13,6 +13,7 @@ import { QueryVaccineDto } from './dto/query-vaccine.dto';
 import { Pet, PetDocument } from '../pets/schemas/pets.schema';
 import { TutorsService } from '../tutors/tutors.service';
 import { ProvidersService } from '../providers/providers.service';
+import { UsersService } from '../users/users.service';
 
 interface UserPayload {
   _id: string;
@@ -26,6 +27,7 @@ export class VaccinesService {
     @InjectModel(Pet.name) private readonly petModel: Model<PetDocument>,
     private readonly tutorsService: TutorsService,
     private readonly providersService: ProvidersService,
+    private readonly usersService: UsersService,
   ) {}
 
   private async assertPet(petId: string | Types.ObjectId) {
@@ -39,24 +41,14 @@ export class VaccinesService {
     if (!pet) throw new NotFoundException('Pet não encontrado.');
 
     let finalProviderId: string | undefined = undefined;
+    let finalVeterinarianName: string | undefined = dto.veterinarian;
+    const userRole = user.role?.toLowerCase();
 
-    const dtoProviderId = (dto as any).providerId;
-
-    if (user.role === 'tutor') {
-      const petOwnerId = (pet as any).owner.toString();
-
-      if (petOwnerId !== user._id.toString()) {
-        throw new ForbiddenException(
-          'Você não tem permissão para cadastrar vacinas para este pet.',
-        );
-      }
-
-      if (dtoProviderId) {
-        throw new ForbiddenException(
-          'Tutores não podem preencher o ID do Provedor. Apenas Provedores podem cadastrar vacinas em seu próprio nome.',
-        );
-      }
-    } else if (user.role === 'provider') {
+    if (userRole === 'tutor') {
+      throw new ForbiddenException(
+        'Apenas Provedores (Veterinários ou Clínicas) podem cadastrar vacinas.',
+      );
+    } else if (userRole === 'provider') {
       const provider = await this.providersService.findOneByUserId(user._id);
 
       if (!provider) {
@@ -64,12 +56,12 @@ export class VaccinesService {
           'Perfil de provedor não encontrado. Verifique seu cadastro.',
         );
       }
-
       finalProviderId = provider._id.toString();
-      if (dtoProviderId && finalProviderId !== dtoProviderId) {
-        throw new ForbiddenException(
-          'O Provedor da vacina deve ser o seu próprio ID de Provedor.',
-        );
+      if (!dto.veterinarian) {
+        const userDetails = await this.usersService.findByUserId(user._id);
+        if (userDetails && userDetails.nome) {
+          finalVeterinarianName = userDetails.nome;
+        }
       }
     } else {
       throw new ForbiddenException(
@@ -80,7 +72,8 @@ export class VaccinesService {
     const created = await this.model.create({
       ...dto,
       pet: new Types.ObjectId(petId),
-      provider: user.role === 'provider' ? finalProviderId : dtoProviderId,
+      veterinarian: finalVeterinarianName,
+      provider: new Types.ObjectId(finalProviderId),
     });
 
     return created.toObject();
@@ -107,22 +100,17 @@ export class VaccinesService {
 
   async findAll(q: QueryVaccineDto) {
     const filter: FilterQuery<VaccineDocument> = {};
-
     if (q.pet) filter.pet = new Types.ObjectId(q.pet);
-
     if (q.q) {
       filter.$text = { $search: q.q };
     }
-
     if (typeof q.completed !== 'undefined') {
       filter.isCompleted = q.completed === 'true';
     }
-
     if (q.overdue === 'true') {
       filter.nextDoseAt = { $lt: new Date() };
       filter.isCompleted = false;
     }
-
     if (q.dueUntil) {
       filter.nextDoseAt = {
         ...(filter.nextDoseAt || {}),
@@ -130,7 +118,6 @@ export class VaccinesService {
       };
       filter.isCompleted = false;
     }
-
     if (q.appliedFrom || q.appliedTo) {
       filter.appliedAt = {};
       if (q.appliedFrom) filter.appliedAt.$gte = new Date(q.appliedFrom);
@@ -140,7 +127,6 @@ export class VaccinesService {
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
-
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
