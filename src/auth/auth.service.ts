@@ -132,8 +132,12 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId, userType: UserType) {
+    const roleString = userType.toString().toLowerCase();
     const accessToken = this.jwtService.sign(
-      { userId: userId.toString() },
+      {
+        userId: userId.toString(),
+        role: roleString,
+      },
       { expiresIn: '1d' },
     );
     const refreshToken = uuidv4();
@@ -174,7 +178,6 @@ export class AuthService {
       },
     };
   }
-
   async salvarRefreshToken(token: string, userId: Types.ObjectId) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 3);
