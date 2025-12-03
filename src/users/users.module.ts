@@ -1,5 +1,3 @@
-// users.module.ts
-
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
@@ -10,14 +8,13 @@ import { TutorsModule } from 'src/tutors/tutors.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    TutorsModule
+    TutorsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  // 💡 CORREÇÃO AQUI: EXPORTE O MODELO DO MONGOOSE
   exports: [
     UsersService,
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
 })
-export class UsersModule { }
+export class UsersModule {}
