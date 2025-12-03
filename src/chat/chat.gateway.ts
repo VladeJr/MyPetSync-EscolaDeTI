@@ -4,6 +4,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   ConnectedSocket,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
@@ -23,10 +24,21 @@ export class ChatGateway {
   constructor(private readonly chatService: ChatService) {}
 
   handleConnection(client: Socket) {
-    const userId = (client.handshake as any).user?.userId;
+    const user = (client.handshake as any).user;
     console.log(
-      `Cliente conectado ao chat: ${client.id} (User ID: ${userId || 'N/A'})`,
+      `Cliente conectado ao chat: ${client.id} (User ID: ${
+        user?.userId || 'N/A'
+      })`,
     );
+  }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: string,
+  ) {
+    client.join(roomId);
+    console.log(`Client ${client.id} entrou na sala ${roomId}`);
   }
 
   @SubscribeMessage('sendMessage')
@@ -35,7 +47,18 @@ export class ChatGateway {
     @MessageBody()
     payload: { roomId: string; content: string },
   ) {
-    const senderId = (client.handshake as any).user.userId;
+    const user = (client.handshake as any).user;
+
+    if (!user?.userId) {
+      console.error(
+        'WS: usuário não definido no socket ao enviar mensagem. payload:',
+        payload,
+      );
+      throw new WsException('Usuário não autenticado no socket');
+    }
+
+    const senderId = user.userId;
+
     const message = await this.chatService.sendMessage(senderId, {
       roomId: payload.roomId,
       content: payload.content,
