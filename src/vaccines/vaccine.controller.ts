@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -31,12 +32,18 @@ export class VaccinesController {
 
   @Post()
   @ApiOkResponse({ description: 'Vacina criada' })
-  create(@Body() dto: CreateVaccineDto, @Param('petId') petId?: string) {
+  create(
+    @Body() dto: CreateVaccineDto,
+    @Param('petId') petId?: string,
+    @Req() req?: any,
+  ) {
+    const user = req.user;
+
     if (petId) {
       const { pet, ...payload } = dto;
-      return this.service.createForPet(petId, payload);
+      return this.service.createForPet(petId, payload, user);
     }
-    return this.service.create(dto);
+    return this.service.create(dto, user);
   }
 
   @Get('pet/:id')
