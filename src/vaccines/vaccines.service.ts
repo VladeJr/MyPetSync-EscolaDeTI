@@ -14,6 +14,7 @@ import { Pet, PetDocument } from '../pets/schemas/pets.schema';
 import { TutorsService } from '../tutors/tutors.service';
 import { ProvidersService } from '../providers/providers.service';
 import { UsersService } from '../users/users.service';
+import { UserType } from '../users/schemas/user.schema';
 
 interface UserPayload {
   _id: string;
@@ -42,38 +43,30 @@ export class VaccinesService {
 
     let finalProviderId: string | undefined = undefined;
     let finalVeterinarianName: string | undefined = dto.veterinarian;
+
     const userRole = user.role?.toLowerCase();
 
-    if (userRole === 'tutor') {
-      throw new ForbiddenException(
-        'Apenas Provedores (Veterinários ou Clínicas) podem cadastrar vacinas.',
-      );
-    } else if (userRole === 'provider') {
+    if (userRole === UserType.PROVIDER) {
       const provider = await this.providersService.findOneByUserId(user._id);
 
-      if (!provider) {
-        throw new ForbiddenException(
-          'Perfil de provedor não encontrado. Verifique seu cadastro.',
-        );
-      }
-      finalProviderId = provider._id.toString();
-      if (!dto.veterinarian) {
-        const userDetails = await this.usersService.findByUserId(user._id);
-        if (userDetails && userDetails.nome) {
-          finalVeterinarianName = userDetails.nome;
+      if (provider) {
+        finalProviderId = provider._id.toString();
+        if (!dto.veterinarian) {
+          const userDetails = await this.usersService.findByUserId(user._id);
+          if (userDetails && userDetails.nome) {
+            finalVeterinarianName = userDetails.nome;
+          }
         }
       }
-    } else {
-      throw new ForbiddenException(
-        'Sua função não tem permissão para esta ação.',
-      );
     }
 
     const created = await this.model.create({
       ...dto,
       pet: new Types.ObjectId(petId),
       veterinarian: finalVeterinarianName,
-      provider: new Types.ObjectId(finalProviderId),
+      provider: finalProviderId
+        ? new Types.ObjectId(finalProviderId)
+        : undefined,
     });
 
     return created.toObject();
