@@ -25,6 +25,22 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+function mapUserTypeToRole(userType: UserType | string): string {
+  const normalizedType = String(userType).toLowerCase();
+
+  if (normalizedType === 'tutor') return 'tutor';
+  if (
+    normalizedType === 'provider' ||
+    normalizedType === 'autonomo' ||
+    normalizedType === 'prestador' ||
+    normalizedType.includes('veterinario')
+  ) {
+    return 'provider';
+  }
+
+  return normalizedType;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -96,12 +112,15 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.UserModel.findOne({ email: loginDto.email });
+    const emailLower = loginDto.email.toLowerCase();
+    const user = await this.UserModel.findOne({ email: emailLower });
+
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
     const passwordMatch = await bcrypt.compare(loginDto.senha, user.senha_hash);
+
     if (!passwordMatch) {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
@@ -132,8 +151,12 @@ export class AuthService {
   }
 
   async generateUserToken(userId: Types.ObjectId, userType: UserType) {
+    const roleString = mapUserTypeToRole(userType);
     const accessToken = this.jwtService.sign(
-      { userId: userId.toString() },
+      {
+        userId: userId.toString(),
+        role: roleString,
+      },
       { expiresIn: '1d' },
     );
     const refreshToken = uuidv4();
