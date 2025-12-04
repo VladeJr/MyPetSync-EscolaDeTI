@@ -47,6 +47,21 @@ export class ChatService {
     return room;
   }
 
+  async getRoomDetails(roomId: string) {
+    if (!Types.ObjectId.isValid(roomId)) {
+      throw new NotFoundException('Sala não encontrada');
+    }
+
+    const room = await this.chatRoomModel
+      .findById(roomId)
+      .populate('participants', 'nome tipo_usuario')
+      .exec();
+
+    if (!room) throw new NotFoundException('Sala não encontrada');
+
+    return room;
+  }
+
   async getOrCreateRoomForParticipants(userIds: string[], name?: string) {
     const participants = userIds.map((id) => new Types.ObjectId(id));
 
@@ -88,7 +103,6 @@ export class ChatService {
     if (!Types.ObjectId.isValid(roomId)) {
       return [];
     }
-    
 
     return this.messageModel
       .find({ roomId: new Types.ObjectId(roomId) })
