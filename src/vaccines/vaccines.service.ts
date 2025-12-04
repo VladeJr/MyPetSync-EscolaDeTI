@@ -94,6 +94,13 @@ export class VaccinesService {
   async findAll(q: QueryVaccineDto) {
     const filter: FilterQuery<VaccineDocument> = {};
     if (q.pet) filter.pet = new Types.ObjectId(q.pet);
+    if (q.provider) {
+      if (!Types.ObjectId.isValid(q.provider)) {
+        throw new BadRequestException('ID do Prestador inválido.');
+      }
+      filter.provider = new Types.ObjectId(q.provider);
+    }
+
     if (q.q) {
       filter.$text = { $search: q.q };
     }
@@ -120,10 +127,23 @@ export class VaccinesService {
     const page = Math.max(parseInt(q.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(q.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
+
+    let populateOptions: any = 'pet';
+    if (q.provider) {
+      populateOptions = {
+        path: 'pet',
+        select: 'name species breed tutor',
+        populate: {
+          path: 'tutor',
+          select: 'name',
+        },
+      };
+    }
+
     const [items, total] = await Promise.all([
       this.model
         .find(filter)
-        .populate('pet', 'name species breed owner')
+        .populate(populateOptions)
         .sort({ nextDoseAt: 1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
