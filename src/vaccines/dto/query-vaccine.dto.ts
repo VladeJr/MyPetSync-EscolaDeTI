@@ -18,6 +18,14 @@ export class QueryVaccineDto {
   pet?: string;
 
   @ApiPropertyOptional({
+    description: 'Filtrar por profissional que aplicou a vacina (Provider ID)',
+    example: '6930f4d06614d33ac6f6c6de',
+  })
+  @IsOptional()
+  @IsMongoId()
+  provider?: string;
+
+  @ApiPropertyOptional({
     description: 'Busca por nome/fabricante',
     example: 'raiva',
   })
