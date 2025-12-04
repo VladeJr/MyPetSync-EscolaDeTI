@@ -5,11 +5,11 @@ import { AppointmentsService } from './appointments.service';
 import { Appointment, AppointmentSchema } from './schemas/appointment.schema';
 import { Pet, PetSchema } from '../pets/schemas/pets.schema';
 import { Provider, ProviderSchema } from '../providers/schemas/provider.schema';
-import { Tutor, TutorSchema } from '../tutors/schemas/tutor.schema';
 import { ProvidersModule } from 'src/providers/providers.module';
 import { TutorsModule } from 'src/tutors/tutors.module';
 import { PetsModule } from '../pets/pets.module';
 import { ReviewsModule } from 'src/reviews/reviews.module';
+import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
   imports: [
@@ -17,20 +17,20 @@ import { ReviewsModule } from 'src/reviews/reviews.module';
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Pet.name, schema: PetSchema },
       { name: Provider.name, schema: ProviderSchema },
-      { name: Tutor.name, schema: TutorSchema },
     ]),
     forwardRef(() => ProvidersModule),
     TutorsModule,
     PetsModule,
     forwardRef(() => ReviewsModule),
+    ChatModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
   exports: [
     AppointmentsService,
     MongooseModule.forFeature([
-      { name: Appointment.name, schema: AppointmentSchema }
+      { name: Appointment.name, schema: AppointmentSchema },
     ]),
   ],
 })
-export class AppointmentsModule { }
+export class AppointmentsModule {}

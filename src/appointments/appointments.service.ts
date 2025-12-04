@@ -6,12 +6,12 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { QueryAppointmentDto } from './dto/query-appointment.dto';
 import { Pet } from '../pets/schemas/pets.schema';
-import {
-  Provider,
-} from '../providers/schemas/provider.schema';
+import { Provider } from '../providers/schemas/provider.schema';
 import { ProvidersService } from 'src/providers/providers.service';
 import { PetsService } from '../pets/pets.service';
-import { ReviewsService } from 'src/reviews/reviews.service'; // ✅ Import mantido e necessário
+import { ReviewsService } from 'src/reviews/reviews.service';
+import { ChatService } from 'src/chat/chat.service';
+import { TutorsService } from 'src/tutors/tutors.service';
 
 const petPopulationConfig = {
   path: 'pet',
@@ -37,13 +37,19 @@ export class AppointmentsService {
   constructor(
     @InjectModel(Appointment.name)
     private readonly model: Model<AppointmentDocument>,
-    @InjectModel(Pet.name) private readonly petModel: Model<Pet>,
+
+    @InjectModel(Pet.name)
+    private readonly petModel: Model<Pet>,
+
     @InjectModel(Provider.name)
     private readonly providerModel: Model<Provider>,
+
     private readonly providersService: ProvidersService,
     private readonly petsService: PetsService,
-    private readonly reviewsService: ReviewsService, // ✅ Injeção mantida
-  ) { }
+    private readonly reviewsService: ReviewsService,
+    private readonly chatService: ChatService,
+    private readonly tutorsService: TutorsService,
+  ) {}
 
   private async assertPet(id: string | Types.ObjectId) {
     const ok = await this.petModel.exists({ _id: id });
@@ -67,12 +73,49 @@ export class AppointmentsService {
   async create(dto: CreateAppointmentDto) {
     await this.assertPet(dto.pet);
     await this.assertProvider(dto.provider);
+
     const created = await this.model.create({
       ...dto,
       pet: new Types.ObjectId(dto.pet),
       provider: new Types.ObjectId(dto.provider),
       dateTime: new Date(dto.dateTime),
     });
+
+    try {
+      // Buscar pet (para pegar tutorId e nome)
+      const pet = await this.petModel
+        .findById(dto.pet)
+        .select('nome tutorId')
+        .lean();
+
+      // Buscar provider (para pegar userId do prestador)
+      const provider = await this.providerModel
+        .findById(dto.provider)
+        .select('userId')
+        .lean();
+
+      let tutorUserId: string | undefined;
+
+      if (pet?.tutorId) {
+        const tutor = await this.tutorsService.findById(pet.tutorId.toString());
+
+        tutorUserId = tutor?.userId?.toString();
+      }
+
+      if (provider?.userId && tutorUserId) {
+        await this.chatService.getOrCreateRoomForParticipants(
+          [provider.userId.toString(), tutorUserId],
+          `Atendimento - ${pet?.nome ?? 'Pet'}`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        'Erro ao criar/associar sala de chat para o agendamento:',
+        err,
+      );
+      // não joga erro pra não quebrar criação do agendamento
+    }
+
     return created.toObject();
   }
 
@@ -102,7 +145,8 @@ export class AppointmentsService {
     return this.findAll({ ...q, provider: providerId });
   }
 
-  async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) { // ✅ LÓGICA CORRIGIDA AQUI
+  async findAllByTutorId(tutorId: string, q: QueryAppointmentDto) {
+    // ✅ LÓGICA CORRIGIDA AQUI
 
     const pets = await this.petsService.findAllByTutor(tutorId);
 
@@ -133,7 +177,7 @@ export class AppointmentsService {
     // 3. Busca no ReviewsService quais destes agendamentos o tutor já avaliou
     const reviewedIds = await this.reviewsService.findReviewedAppointments(
       tutorId, // ID do autor
-      appointmentIds // IDs dos agendamentos
+      appointmentIds, // IDs dos agendamentos
     );
 
     const reviewedSet = new Set(reviewedIds);
@@ -176,8 +220,8 @@ export class AppointmentsService {
     const dateToValue = q.to;
     if (q.from || dateToValue) {
       filter.dateTime = {};
-      if (q.from) (filter.dateTime as any).$gte = new Date(q.from);
-      if (q.to) (filter.dateTime as any).$lte = new Date(q.to);
+      if (q.from) filter.dateTime.$gte = new Date(q.from);
+      if (q.to) filter.dateTime.$lte = new Date(q.to);
     }
 
     if (q.minPrice || q.maxPrice) {
@@ -285,14 +329,17 @@ export class AppointmentsService {
 
   async updateAppointmentStatus(
     id: string,
-    updateData: { isRated: boolean } | { status: string }
+    updateData: { isRated: boolean } | { status: string },
   ): Promise<void> {
     const updated = await this.model.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: true, lean: true },
     );
-    if (!updated) throw new NotFoundException('Agendamento não encontrado para atualização de status.');
+    if (!updated)
+      throw new NotFoundException(
+        'Agendamento não encontrado para atualização de status.',
+      );
   }
 
   async update(id: string, dto: UpdateAppointmentDto) {
@@ -313,21 +360,22 @@ export class AppointmentsService {
     if (dto.email !== undefined) payload.email = dto.email;
     if (dto.phone !== undefined) payload.phone = dto.phone;
     if (dto.pet !== undefined) payload.pet = new Types.ObjectId(dto.pet);
-    if (dto.provider !== undefined) payload.provider = new Types.ObjectId(dto.provider);
+    if (dto.provider !== undefined)
+      payload.provider = new Types.ObjectId(dto.provider);
     if (dto.service !== undefined) {
       payload.service = dto.service ? new Types.ObjectId(dto.service) : null;
     }
 
-
-    const updated = await this.model.findOneAndUpdate(
-      { _id: new Types.ObjectId(id) },
-      { $set: payload },
-      {
-        new: true,
-        runValidators: true,
-        context: 'query'
-      }
-    )
+    const updated = await this.model
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        { $set: payload },
+        {
+          new: true,
+          runValidators: true,
+          context: 'query',
+        },
+      )
       .populate(petPopulationConfig)
       .populate(providerPopulationConfig)
       .populate(servicePopulationConfig)
