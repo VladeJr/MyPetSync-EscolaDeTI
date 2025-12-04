@@ -37,6 +37,9 @@ export class Vaccine {
 
   @Prop({ type: String })
   notes?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Provider', index: true })
+  provider?: Types.ObjectId;
 }
 
 export const VaccineSchema = SchemaFactory.createForClass(Vaccine);

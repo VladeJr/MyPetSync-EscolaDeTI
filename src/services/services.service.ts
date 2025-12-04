@@ -142,6 +142,9 @@ export class ServicesService {
 
   async findAllByProviderUser(userId: string, q: QueryServiceDto) {
     const provider = await this.providersService.findOneByUserId(userId);
+    if (!provider) {
+      throw new NotFoundException('Perfil de prestador não encontrado.');
+    }
     const providerId = (provider._id as Types.ObjectId).toHexString();
 
     return this.findAll({ ...q, provider: providerId });

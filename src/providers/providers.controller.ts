@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -98,6 +99,10 @@ export class ProvidersController {
     @Body() dto: Omit<CreateServiceDto, 'provider'>,
   ) {
     const provider = await this.service.findOneByUserId(user.userId);
+    if (!provider) {
+      throw new NotFoundException('Perfil de prestador não encontrado.');
+    }
+
     const createDto: CreateServiceDto = {
       ...dto,
       provider: (provider._id as Types.ObjectId).toHexString(),

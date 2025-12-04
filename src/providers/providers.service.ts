@@ -112,17 +112,10 @@ export class ProvidersService {
     } catch (e) {
       throw new BadRequestException('ID de Usuário inválido.');
     }
-
     let found = await this.model.findOne({ userId: userIdObj }).lean();
-
     if (!found) {
       found = await this.model.findOne({ userId: userId }).lean();
     }
-
-    if (!found) {
-      throw new NotFoundException(`Perfil de prestador não encontrado.`);
-    }
-
     return found;
   }
 
