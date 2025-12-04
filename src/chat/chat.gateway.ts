@@ -18,6 +18,9 @@ import { WsJwtGuard } from 'src/auth/guards/ws-auth.guard';
   namespace: '/chat',
 })
 export class ChatGateway {
+  handleMessage(arg0: any, arg1: { roomId: string; content: string; userId: string; }) {
+      throw new Error('Method not implemented.');
+  }
   @WebSocketServer()
   server: Server;
 
