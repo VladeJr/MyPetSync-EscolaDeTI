@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -30,6 +23,11 @@ export class ChatController {
   @Get('rooms/:id/messages')
   getMessages(@Param('id') roomId: string) {
     return this.chatService.getMessages(roomId);
+  }
+
+  @Get('rooms/:id')
+  getRoomDetails(@Param('id') roomId: string) {
+    return this.chatService.getRoomDetails(roomId);
   }
 
   @Post('rooms/:id/messages')
