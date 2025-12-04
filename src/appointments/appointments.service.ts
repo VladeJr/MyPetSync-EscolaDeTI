@@ -24,7 +24,11 @@ const petPopulationConfig = {
 
 const providerPopulationConfig = {
   path: 'provider',
-  select: 'name email city state whatsapp',
+  select: 'name email city state whatsapp user',
+  populate: {
+    path: 'user',
+    select: 'nome email tipo_usuario',
+  },
 };
 
 const servicePopulationConfig = {
